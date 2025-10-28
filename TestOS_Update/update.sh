@@ -17,7 +17,7 @@ CURRENT_VER=$(cat "$VERSION_FILE_CURRENT" | tr -d ' \n')
 sudo rm -rf /home/testos/NTC_TestOS
 
 # Gitから新しいバージョンを取得
-git clone https://newtechnose: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@github.com/newtechnose/NTC_TestOS-Lubuntu-.git "$CLONEDIR"
+git clone https://github.com/newtechnose/NTC_TestOS-Lubuntu-.git "$CLONEDIR"
 sudo chmod 777 $CLONEDIR
 if [[ $? -ne 0 ]]; then
     zenity --error --text="Gitリポジトリのクローンに失敗しました。"

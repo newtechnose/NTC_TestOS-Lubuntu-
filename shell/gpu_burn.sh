@@ -7,7 +7,7 @@ cd /home/testos/shell
 zenity --info --width 800 --title="gpu_burn" --text="GPU負荷試験用ツール gpu_burnを起動します。\nウィンドウのOKを押して、テストが完了するまで待ってください。"
 
 # スクリプトの実行結果をターミナルに表示
-gnome-terminal --wait -- /bin/bash -c "/home/testos/shell/gpu_burn_with_nvidia-smi_v4.sh"
+qterminal -e "bash -c '/home/testos/shell/gpu_burn_with_nvidia-smi_v4.sh'"
 # スクリプトの結果によってzenityでメッセージを表示
 zenity --info --width 800 --title='Infomation' --text='GPU負荷テストが終了しました\n結果はログファイルをご確認ください。\n※ログファイルの場所：/home/testos/gpu-burn/gpu_logs'
 

@@ -23,16 +23,16 @@ action=$(zenity --list --radiolist \
 # 選択に応じた処理
 if [ "$action" == "①Meister-SのStatusを見る" ]; then
   # Meister-SのStatusを見る
-  gnome-terminal --wait -- /bin/bash -c "sudo /usr/local/MirrorMonitor/nu_disp -t /dev/$selected_drive --show-info-all ;read -p 'Press Enter to exit...'"
+  qterminal -e "bash -c 'sudo /usr/local/MirrorMonitor/nu_disp -t /dev/$selected_drive --show-info-all ;read -p 'Press Enter to exit...''"
 
 elif [ "$action" == "②Meister-Sのバージョンを見る" ]; then
   # Meister-Sのバージョンを見る
-  gnome-terminal --wait -- /bin/bash -c "sudo /usr/local/MirrorMonitor/nu_disp -t /dev/$selected_drive --show-info-all | grep -i -E 'FPGA Revision|RAID FirmWare' ;read -p 'Press Enter to exit...'"
+  qterminal -e "bash -c 'sudo /usr/local/MirrorMonitor/nu_disp -t /dev/$selected_drive --show-info-all | grep -i -E 'FPGA Revision|RAID FirmWare' ;read -p 'Press Enter to exit...''"
 
 
 elif [ "$action" == "③パトロールリードを実行する" ]; then
   # パトロールリードを実行
-  gnome-terminal --wait -- /bin/bash -c "
+  qterminal -e "bash -c '
     # パトロールリードを開始
     echo 'パトロールリードを開始します...'
     sudo /usr/local/MirrorMonitor/nu_pr -t /dev/$selected_drive start
@@ -60,7 +60,7 @@ elif [ "$action" == "③パトロールリードを実行する" ]; then
     # 完了メッセージを表示
     echo 'Meister-Sのパトロールリードが完了しました。'
     # パトロールリード完了の通知をZenityで表示
-  "
+  '"
   　　zenity --info --text "Meister-Sのパトロールリードが完了しました。" --title "完了通知"
   　　
 elif [ "$action" == "④Meister-Sのログを取得する" ]; then
@@ -74,12 +74,12 @@ elif [ "$action" == "④Meister-Sのログを取得する" ]; then
   fi
 
   # ログ取得処理を実行
-  gnome-terminal --wait -- /bin/bash -c "
+  qterminal -e "bash -c '
     echo 'Meister-Sのログを取得中...'
     sudo /usr/local/MirrorMonitor/nu_getlog -t /dev/$selected_drive -f /home/testos/Meister-S_Log/$log_filename
     echo 'Meister-Sのログ取得が完了しました。'
     sudo chmod 777 /home/testos/Meister-S_Log/$log_filename
-  "
+  '"
 
   # ログ取得完了の通知をZenityで表示
   zenity --info --text "Meister-Sのログを取得しました。\n保存先: /home/testos/Meister-S_Log/$log_filename" --title "ログ取得完了"

@@ -65,7 +65,7 @@ do
 
     # GPU-burnを実行
     cd /home/testos/gpu-burn
-    /home/testos/gpu-burn/gpu_burn "$GPU_BURN_TIME" > "/home/testos/gpu-burn/gpu_logs/cycle_$i/gpu_burn_output.txt" 2>&1 &
+    docker run --rm --gpus all gpu_burn "$GPU_BURN_TIME" > "/home/testos/gpu-burn/gpu_logs/cycle_$i/gpu_burn_output.txt" 2>&1 &
     GPU_BURN_PID=$!
     echo "GPU-burn PID: $GPU_BURN_PID"
 

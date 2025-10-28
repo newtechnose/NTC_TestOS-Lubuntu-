@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/testos/shell
-python gpu_burn_gui.py
+python3 gpu_burn_gui.py

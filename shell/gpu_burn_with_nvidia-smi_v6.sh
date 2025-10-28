@@ -21,7 +21,7 @@ cleanup() {
 }
 
 # 最初にログを削除するかどうか尋ねる
-zenity --question --title="Confirmation" --text="最初にログを削除しプログラムを実行します。\n※いいえにするとプログラムを終了します。"
+zenity --question --title="Confirmation" --text="最初にログを削除しプログラムを実行します。\n※いいえにするとプログラムを終了します。" --width=400 --height=150
 response=$?
 
 if [ $response -eq 0 ]; then
@@ -30,25 +30,25 @@ if [ $response -eq 0 ]; then
 fi
 
 # サイクルの回数を入力
-NUM_CYCLES=$(zenity --entry --title="Input" --text="サイクルを入力してください（例：5）")
+NUM_CYCLES=$(zenity --entry --title="Input" --text="サイクルを入力してください（例：5）" --width=400 --height=150)
 if [ -z "$NUM_CYCLES" ]; then
     cleanup
 fi
 
 # GPU-burnの実行時間を入力
-GPU_BURN_TIME=$(zenity --entry --title="Input" --text="GPU-burnの実行時間を入力してください (in seconds)")
+GPU_BURN_TIME=$(zenity --entry --title="Input" --text="GPU-burnの実行時間を入力してください (in seconds)" --width=400 --height=150)
 if [ -z "$GPU_BURN_TIME" ]; then
     cleanup
 fi
 
 # 休憩時間を入力
-BREAK_TIME=$(zenity --entry --title="Input" --text="休憩時間を入力してください (例：50s、1h...)")
+BREAK_TIME=$(zenity --entry --title="Input" --text="休憩時間を入力してください (例：50s、1h...)" --width=400 --height=150)
 if [ -z "$BREAK_TIME" ]; then
     cleanup
 fi
 
 # nvidia-smiの取得時間を入力
-NVSMI_TIME=$(zenity --entry --title="Input" --text="nvidia-smiを何秒ごとに取得するか入力してください (in seconds)")
+NVSMI_TIME=$(zenity --entry --title="Input" --text="nvidia-smiを何秒ごとに取得するか入力してください (in seconds)" --width=400 --height=150)
 if [ -z "$NVSMI_TIME" ]; then
     cleanup
 fi

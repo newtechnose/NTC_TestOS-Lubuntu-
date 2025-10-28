@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LSA
+Comment=Run LSA
+Exec=/home/testos/shell/LSA.sh
+Icon=/home/testos/Pictures/Icon/LSA.png
+Terminal=false
+
+
+

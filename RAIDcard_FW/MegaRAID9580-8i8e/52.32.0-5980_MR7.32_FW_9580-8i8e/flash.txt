@@ -1,0 +1,25 @@
+***Important***
+
+Is is unlikely any issues will arise by flashing your MegaRAID controller, but always use caution.
+Make sure that you have a backup of your data on the Virtual drives that are connected to your MegaRAID controller that you are flashing.
+
+To flash MegaRAID RAID controllers, you can use LSA, (LSI StorageAuthority) or storcli.
+Make sure that you get the latest storcli for your product.
+Using an old version of storcli may result in flash failure.
+
+storcli /cx download file=filename 
+
+Note - /cx is a variable, usually /c0 and can be confirmed with storcli show
+
+It is highly recommended to also update the PSoC firmware as well:
+storcli /cx download file=pblp_catalog.signed.rom
+
+
+You may also save your configuration (Highly recommended) with storcli:
+Save config:
+storcli64 /c0 get config file=c0.cfg
+
+Store the file off the server.
+If changes are made to the Virtual drive configuration such as a spare rebuilding, the file needs to be updated.
+
+

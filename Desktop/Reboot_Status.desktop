@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Reboot Status
+Comment=Run Reboot Status
+Exec=/home/testos/shell/Reboot_Status.sh
+Icon=/home/testos/Pictures/Icon/reboot_Status.png
+Terminal=false
+
+

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RAID Card FWUP
+Comment=Run RAIDCardFWUP
+Exec=/home/testos/shell/RAID_Card_FW.sh
+Icon=/home/testos/Pictures/Icon/RAIDFWUP.png
+Terminal=true
+
+

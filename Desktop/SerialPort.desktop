@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Serial Port
+Comment=Run minicom
+Exec=/home/testos/shell/minicom.sh
+Icon=/home/testos/Pictures/Icon/COM.png
+Terminal=false
+
+

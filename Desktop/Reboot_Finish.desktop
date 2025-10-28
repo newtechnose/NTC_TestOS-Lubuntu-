@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Reboot Finish
+Comment=Run Reboot Finish
+Exec=/home/testos/shell/Reboot_Finish.sh
+Icon=/home/testos/Pictures/Icon/reboot_Finish.png
+Terminal=false
+

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=IPMI Set
+Comment=Run IPMI Set
+Exec=/home/testos/shell/IPMI_gui.sh
+Icon=/home/testos/Pictures/Icon/IPMI.jpg
+Terminal=true
+
+

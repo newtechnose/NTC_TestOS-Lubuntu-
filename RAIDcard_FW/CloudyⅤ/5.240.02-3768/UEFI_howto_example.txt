@@ -1,0 +1,21 @@
+
+================================================
+Standard Firmware Update Procedure under UEFI Shell
+================================================
+
+1. Save the firmawre update package to your computer.
+
+2. Extract the files from the UEFI folder of the BIOS package to a USB stick. 
+   (Note: The USB stick doesn't have to be bootable, but has to be formatted
+   with the FAT/FAT32 file system.)
+
+3. Plug the USB stick into a USB port, boot to the Build-In UEFI Shell,then start the firmare update:
+
+     Shell> fs0:
+     fs0:\> cd [FW folder]
+     fs0:\UEFI> UPDATE.NSH
+
+4. Do not interrupt the process until the firmware update is complete.
+
+5. Perform an A/C power cycle after the firmware update has completed.
+

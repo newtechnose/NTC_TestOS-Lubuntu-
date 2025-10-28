@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LAN Check
+Comment=Check LAN Ports
+Exec=/home/testos/shell/lan_speed_test.sh
+Icon=/home/testos/Pictures/Icon/LAN1.png
+Terminal=false
+
+

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=USB Test
+Comment=Run USB Test
+Exec=/home/testos/shell/USB_Test.sh
+Icon=/home/testos/Pictures/Icon/USB.png
+Terminal=true
+
+

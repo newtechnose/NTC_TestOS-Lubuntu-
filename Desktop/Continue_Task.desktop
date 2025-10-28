@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Continue Task
+Comment=Run Continue shell
+Exec=/home/testos/shell/Continue_Task.sh
+Icon=/home/testos/Pictures/Icon/continue_task.png
+Terminal=true
+
+

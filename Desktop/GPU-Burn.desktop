@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=GPU Burn
+Comment=Run gpu_burn.sh to stress test GPU
+Exec=/home/testos/shell/gpu_burn_gui.sh
+Icon=/home/testos/Pictures/Icon/gpu-burn2.png
+Terminal=false
+
+

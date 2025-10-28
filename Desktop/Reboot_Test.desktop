@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Reboot Test
+Comment=Run Reboot Test
+Exec=/home/testos/shell/Reboot_TEST.sh
+Icon=/home/testos/Pictures/Icon/reboot test.png
+Terminal=false
+
+

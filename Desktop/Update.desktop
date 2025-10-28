@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TestOS Update
+Comment=Run TestOS Update
+Exec=/home/testos/TestOS_Update/TestOS_Update.sh
+Icon=/home/testos/Pictures/Icon/Update.png
+Terminal=false
+
+
+

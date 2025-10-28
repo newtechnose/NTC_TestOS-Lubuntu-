@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=S.M.A.R.T. Check
+Comment=show SMART(SECOM VER)
+Exec=/home/testos/shell/SMART_Check.sh
+Icon=/home/testos/Pictures/Icon/HDD.png
+Terminal=true
+
+

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=INIT Task
+Comment=Run Status del
+Exec=/home/testos/shell/INIT_Task.sh
+Icon=/home/testos/Pictures/Icon/INIT_Task.png
+Terminal=true
+

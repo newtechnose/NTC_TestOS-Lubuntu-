@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=BurnInTest
+Comment=Run BurnInTest
+Exec=/home/testos/shell/BurnInTest.sh
+Icon=/home/testos/Pictures/Icon/BurnInTest.jpg
+Terminal=false
+
+
+

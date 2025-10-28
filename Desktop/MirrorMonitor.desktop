@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MirrorMonitor
+Comment=show MirrorMonitor
+Exec=/home/testos/shell/MirrorMonitor.sh
+Icon=/home/testos/Pictures/Icon/MirrorMonitor.png
+Terminal=false
+
+

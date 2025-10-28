@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=NTC Product
+Comment=Run Product shell
+Exec=/home/testos/shell/Product_gui.sh
+Icon=/home/testos/Pictures/Icon/NTC.png
+Terminal=true
+
+

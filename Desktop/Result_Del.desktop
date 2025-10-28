@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Result Del
+Comment=del Result folder
+Exec=/home/testos/shell/Result_Del.sh
+Icon=/home/testos/Pictures/Icon/Logdel.png
+Terminal=true
+

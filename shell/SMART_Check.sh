@@ -56,6 +56,7 @@ echo "SMART data saved in $data_dir"
 # 各SMARTデータファイルを解析し、Device Modelを判定
 wd_count=0
 seagate_count=0
+phison_count=0
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
@@ -63,17 +64,21 @@ for file in "$data_dir"/*.txt; do
             ((wd_count++))
         elif [[ "$device_model" =~ "ST2000NM000B"|"ST4000NM024B"|"ST8000NM017B"|"ST16000NM000J"|"ST20000NM004E" ]]; then
             ((seagate_count++))
+        elif [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
+            ((phison_count++)) 
         fi
     fi
 done
 
 # Zenity の表示（1回のみ）
-if [[ $wd_count -gt 0 && $seagate_count -eq 0 ]]; then
+if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd_count}本でS.M.A.R.T情報を判定します"
-elif [[ $seagate_count -gt 0 && $wd_count -eq 0 ]]; then
+elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count}本でS.M.A.R.T情報を判定します"
+elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0]]; then
+    zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本でS.M.A.R.T情報を判定します"
 else
-    zenity --error --title="エラー" --text="対応していないHDDモデルが含まれています。"
+    zenity --error --title="エラー" --text="対応していないHDD・SSDモデルが含まれています。"
     exit 1
 fi
 
@@ -161,6 +166,45 @@ for file in "$data_dir"/*.txt; do
         fi
     fi
 done
+
+# phison SSD の S.M.A.R.T 判定
+for file in "$data_dir"/*.txt; do
+    if [[ -f "$file" ]]; then
+        device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
+        if [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
+            echo "Checking phison SSD: $device_model..." | tee -a "$RESULT_FILE"
+
+            # SMART値の取得
+            VALUE_1=$((10#$(awk '$1=="1"{print $4}' "$file")))
+            WORST_1=$((10#$(awk '$1=="1"{print $5}' "$file")))
+            RAW_1=$((10#$(awk '$1=="1"{print $10}' "$file")))
+
+            RAW_168=$((10#$(awk '$1=="168"{print $10}' "$file")))
+
+            VALUE_170=$((10#$(awk '$1=="170"{print $4}' "$file")))
+            WORST_170=$((10#$(awk '$1=="170"{print $5}' "$file")))
+
+            VALUE_218=$((10#$(awk '$1=="218"{print $4}' "$file")))
+            WORST_218=$((10#$(awk '$1=="218"{print $5}' "$file")))
+
+            RAW_231=$((10#$(awk '$1=="231"{print $10}' "$file")))
+
+            # 判定条件
+            if [[ "$VALUE_1" -eq 100 && "$WORST_1" -eq 100 && "$RAW_1" -eq 0 ]] &&
+               [[ "$RAW_168" -eq 0 ]] &&
+               [[ "$VALUE_170" -eq 100 && "$WORST_170" -eq 100 ]] &&
+               [[ "$VALUE_218" -eq 100 && "$WORST_218" -eq 100 ]] &&
+               [[ "$RAW_231" -ge 99 ]]; then
+                echo "phison SSD: 合格" | tee -a "$RESULT_FILE"
+            else
+                echo "phison SSD: 不合格" | tee -a "$RESULT_FILE"
+                ALL_PASS=false
+            fi
+        fi
+    fi
+done
+
+
 
 # 判定結果
 if [[ "$ALL_PASS" == true ]]; then

@@ -71,11 +71,11 @@ for file in "$data_dir"/*.txt; do
 done
 
 # Zenity の表示（1回のみ）
-if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0]]; then
+if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd_count}本でS.M.A.R.T情報を判定します"
-elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0]]; then
+elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count}本でS.M.A.R.T情報を判定します"
-elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0]]; then
+elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本でS.M.A.R.T情報を判定します"
 else
     zenity --error --title="エラー" --text="対応していないHDD・SSDモデルが含まれています。"
@@ -89,44 +89,49 @@ RESULT_FILE="$data_dir/result.txt"
 ALL_PASS=true
 
 for file in "$data_dir"/*.txt; do
-    SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
-    DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
+    if [[ -f "$file" ]]; then
+        device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
+        if [[ "$device_model" =~ "ST2000NM000B"|"ST4000NM024B"|"ST8000NM017B"|"ST16000NM000J"|"ST20000NM004E" ]]; then
+        SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
+        DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
 
-    echo "Checking Slot${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
+        echo "Checking Slot${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
 
-    # 各SMART値を数値として取得（10進数指定）
-    WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
-    WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
-    RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
-    WORST_7=$((10#$(awk '$1 == "7" {print $5}' "$file")))
-    WORST_10=$((10#$(awk '$1 == "10" {print $5}' "$file")))
-    RAW_10=$((10#$(awk '$1 == "10" {print $10}' "$file")))
-    WORST_18=$((10#$(awk '$1 == "18" {print $5}' "$file")))
-    WORST_187=$((10#$(awk '$1 == "187" {print $5}' "$file")))
-    RAW_187=$((10#$(awk '$1 == "187" {print $10}' "$file")))
-    VALUE_188=$((10#$(awk '$1 == "188" {print $4}' "$file")))
-    WORST_190=$((10#$(awk '$1 == "190" {print $5}' "$file")))
-    WORST_197=$((10#$(awk '$1 == "197" {print $5}' "$file")))
-    RAW_197=$((10#$(awk '$1 == "197" {print $10}' "$file")))
-    WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
-    RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
+        # 各SMART値を数値として取得（10進数指定）
+        WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
+        WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
+        RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
+        WORST_7=$((10#$(awk '$1 == "7" {print $5}' "$file")))
+        WORST_10=$((10#$(awk '$1 == "10" {print $5}' "$file")))
+        RAW_10=$((10#$(awk '$1 == "10" {print $10}' "$file")))
+        WORST_18=$((10#$(awk '$1 == "18" {print $5}' "$file")))
+        WORST_187=$((10#$(awk '$1 == "187" {print $5}' "$file")))
+        RAW_187=$((10#$(awk '$1 == "187" {print $10}' "$file")))
+        VALUE_188=$((10#$(awk '$1 == "188" {print $4}' "$file")))
+        WORST_190=$((10#$(awk '$1 == "190" {print $5}' "$file")))
+        WORST_197=$((10#$(awk '$1 == "197" {print $5}' "$file")))
+        RAW_197=$((10#$(awk '$1 == "197" {print $10}' "$file")))
+        WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
+        RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
 
-    # 判定条件
-    if [[ "$WORST_1" -ge 47 ]] &&
-       [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] &&
-       [[ "$WORST_7" -ge 47 ]] &&
-       [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] &&
-       [[ "$WORST_18" -eq 100 ]] &&
-       [[ "$WORST_187" -eq 100 && "$RAW_187" -eq 0 ]] &&
-       [[ "$VALUE_188" -eq 100 ]] &&
-       [[ "$WORST_190" -ge 41 ]] &&
-       [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] &&
-       [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+        # 判定条件
+        if [[ "$WORST_1" -ge 47 ]] &&
+           [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] &&
+           [[ "$WORST_7" -ge 47 ]] &&
+           [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] &&
+           [[ "$WORST_18" -eq 100 ]] &&
+           [[ "$WORST_187" -eq 100 && "$RAW_187" -eq 0 ]] &&
+           [[ "$VALUE_188" -eq 100 ]] &&
+           [[ "$WORST_190" -ge 41 ]] &&
+           [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] &&
+           [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
 
-        echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
-    else
-        echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
-        ALL_PASS=false
+            echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
+        else
+            echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
+            ALL_PASS=false
+        fi
+        fi
     fi
 done
 
@@ -167,27 +172,31 @@ for file in "$data_dir"/*.txt; do
     fi
 done
 
-# phison SSD の S.M.A.R.T 判定
+# phison SSD の S.M.A.R.T 判定（Slot/DID付き）
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
         if [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
-            echo "Checking phison SSD: $device_model..." | tee -a "$RESULT_FILE"
+            # ファイル名から Slot と DID を取得
+            SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
+            DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
+
+            echo "Checking Slot${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
 
             # SMART値の取得
-            VALUE_1=$((10#$(awk '$1=="1"{print $4}' "$file")))
-            WORST_1=$((10#$(awk '$1=="1"{print $5}' "$file")))
-            RAW_1=$((10#$(awk '$1=="1"{print $10}' "$file")))
+            VALUE_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $4}' "$file")
+            WORST_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $5}' "$file")
+            RAW_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $NF}' "$file")
 
-            RAW_168=$((10#$(awk '$1=="168"{print $10}' "$file")))
+            RAW_168=$(awk '$1=="168"{print $NF}' "$file")
 
-            VALUE_170=$((10#$(awk '$1=="170"{print $4}' "$file")))
-            WORST_170=$((10#$(awk '$1=="170"{print $5}' "$file")))
+            VALUE_170=$(awk '$1=="170"{print $4}' "$file")
+            WORST_170=$(awk '$1=="170"{print $5}' "$file")
 
-            VALUE_218=$((10#$(awk '$1=="218"{print $4}' "$file")))
-            WORST_218=$((10#$(awk '$1=="218"{print $5}' "$file")))
+            VALUE_218=$(awk '$1=="218"{print $4}' "$file")
+            WORST_218=$(awk '$1=="218"{print $5}' "$file")
 
-            RAW_231=$((10#$(awk '$1=="231"{print $10}' "$file")))
+            RAW_231=$(awk '$1=="231"{print $NF}' "$file")
 
             # 判定条件
             if [[ "$VALUE_1" -eq 100 && "$WORST_1" -eq 100 && "$RAW_1" -eq 0 ]] &&
@@ -195,14 +204,15 @@ for file in "$data_dir"/*.txt; do
                [[ "$VALUE_170" -eq 100 && "$WORST_170" -eq 100 ]] &&
                [[ "$VALUE_218" -eq 100 && "$WORST_218" -eq 100 ]] &&
                [[ "$RAW_231" -ge 99 ]]; then
-                echo "phison SSD: 合格" | tee -a "$RESULT_FILE"
+                echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
             else
-                echo "phison SSD: 不合格" | tee -a "$RESULT_FILE"
+                echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
             fi
         fi
     fi
 done
+
 
 
 

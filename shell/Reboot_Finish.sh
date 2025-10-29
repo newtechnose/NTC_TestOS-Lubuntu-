@@ -27,7 +27,7 @@ if [ -e "$conf_file" ]; then
             echo "$new_content" > "$conf_file"
 
             # Run_Reboot_Status.shの自動起動をやめる
-            systemctl --user disable run_reboot_status.service
+            mv ~/.config/autostart/run_reboot_status.desktop ~/.config/autostart/run_reboot_status.desktop.disabled
             
             # 変更内容をzenityで表示
             zenity --info --text="reboot_tool.conf の内容が変更されました。\n\nあと1回再起動し、リブートテストを終了します。\n\n新しい内容:\n$new_content"

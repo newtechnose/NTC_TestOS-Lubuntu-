@@ -36,11 +36,9 @@ zenity --text-info --title="reboot_tool.conf の内容" --filename="$conf_file" 
 zenity --question --text="Rebootテストを開始します。「はい」を押すと2分後に開始します。\n\n※この時点でreboot_tool.confが変更済み、キャンセルした場合でも再起動するとリブートテストが実行されます。" --title="Confirmation"
 [ $? -eq 0 ] && qterminal -e "bash -c '/usr/sbin/reboot_tool'"
 
-systemctl --user daemon-reload
-systemctl --user enable run_reboot_status.service
-systemctl --user restart run_reboot_status.service
+mv ~/.config/autostart/run_reboot_status.desktop.disabled ~/.config/autostart/run_reboot_status.desktop
 
-#/home/testos/shell/Run_Reboot_Status.sh
+/home/testos/shell/Run_Reboot_Status.sh
 
 # 最後に Enter キーを待つ
 read -p 'Press Enter to close.'

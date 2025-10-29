@@ -30,7 +30,7 @@ while true; do
         wait $!  # Pythonスクリプトの終了を待機
         count_cur=$((count_cur + 1))  # Count Cur を+1
         update_count_cur  # 設定ファイルを更新
-        systemctl --user disable run_reboot_status.service
+        mv ~/.config/autostart/run_reboot_status.desktop ~/.config/autostart/run_reboot_status.desktop.disabled
     elif [[ "$count_cur" -ge "$((count_limit + 2))" ]]; then
         echo "[Count Cur] が [Count Limit] を2以上超えています。スクリプトの実行を停止します。"
         break  # ループを抜ける

@@ -7,7 +7,7 @@ class ImageSelector:
     def __init__(self, root):
         self.root = root
         self.root.title("画像選択")
-        self.root.geometry("950x400")  # ウィンドウサイズを変更
+        self.root.geometry("1200x400")  # ウィンドウサイズを変更
 
         # CloudyとSmartNAS1000の画像ファイルパス
         self.cloudy_image_path = "/home/testos/Pictures/Icon/NTC_Cloudy.png"

@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/testos/shell/
-python Product_gui.py
+python3 Product_gui.py

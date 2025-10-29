@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/testos/shell
-python IPMI_gui.py
+python3 IPMI_gui.py

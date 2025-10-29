@@ -11,7 +11,7 @@ status=$(/etc/init.d/LsiSASH status)
 #    echo "LSI Storage Authority is running."
 #fi
 
-     gnome-terminal --wait -- /bin/bash -c "sudo /etc/init.d/LsiSASH restart"
+     qterminal -e "bash -c 'sudo /etc/init.d/LsiSASH restart'"
 
 
 # 開くURLを指定

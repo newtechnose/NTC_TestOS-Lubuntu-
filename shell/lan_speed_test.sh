@@ -34,7 +34,7 @@ done
 
 # 結果を表示
 if [ -n "$RESULT" ]; then
-  zenity --info --text="$RESULT"
+  zenity --info --text="$RESULT" --width=400 --height=200
 else
   zenity --error --text="LANポートが接続されていません。"
 fi

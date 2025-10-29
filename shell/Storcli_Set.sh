@@ -4,14 +4,15 @@
 sudo sleep 2
 
 # Zenityで選択肢を提示し、複数選択を許可
-options=$(zenity --width 400 --height 400 --list --checklist \
+options=$(zenity --width 500 --height 600 --list --checklist \
     --title="Storcli設定を選択" \
     --text="設定を選んでください" \
     --column="選択" --column="設定項目" \
-    FALSE "PatrolReadの設定" \
-    FALSE "ConsistencyCheckの設定" \
-    FALSE "Copybackの設定" \
-    FALSE "BatteryWarningの設定"\
+    TRUE "PatrolReadの設定" \
+    TRUE "ConsistencyCheckの設定" \
+    TRUE "Copybackの設定" \
+    TRUE "BatteryWarningの「OFF」設定"\
+    FALSE "BatteryWarningの「ON」設定"\
     FALSE "Card Alarm無効の設定" )
 
 # ユーザーがキャンセルした場合
@@ -152,21 +153,37 @@ for option in $options; do
             result_summary+="Copybackの設定結果:\n$copyback_output\n\n"
 	    sleep 2
             ;;
-        "BatteryWarningの設定")
+        "BatteryWarningの「OFF」設定")
             # Battery Warning設定のシェルコマンドを実行
             cd /opt/MegaRAID/storcli
-            echo "Battery Warningの設定を行います。"
+            echo "Battery Warningの「OFF」設定を行います。"
             battery_warning_output=$(sudo ./storcli64 /c$ctl set batterywarning=off 2>&1)
 	    sleep 3
-	    echo "Battery Warningの設定を完了しました。"
+	    echo "Battery Warningの「OFF」設定を完了しました。"
             result_summary+="BatteryWarningの設定結果:\n$battery_warning_output\n\n"
 	    sleep 2
-	    echo "Battery Warningの設定を確認します。"
+	    echo "Battery Warningの「OFF」設定を確認します。"
 	    battery_warning_status=$(sudo ./storcli64 /c$ctl show batterywarning 2>&1)
 	    sleep 3
 	    result_summary+="BatteryWarningの確認結果:\n$battery_warning_status\n\n"
 	    sleep 2
-	    echo "Battery Warningの設定の確認が完了しました。"
+	    echo "Battery Warningの「OFF」設定の確認が完了しました。"
+            ;;
+        "BatteryWarningの「ON」設定")
+            # Battery Warning設定のシェルコマンドを実行
+            cd /opt/MegaRAID/storcli
+            echo "Battery Warningの「ON」設定を行います。"
+            battery_warning_output=$(sudo ./storcli64 /c$ctl set batterywarning=on 2>&1)
+	    sleep 3
+	    echo "Battery Warningの「ON」設定を完了しました。"
+            result_summary+="BatteryWarningの設定結果:\n$battery_warning_output\n\n"
+	    sleep 2
+	    echo "Battery Warningの「ON」設定を確認します。"
+	    battery_warning_status=$(sudo ./storcli64 /c$ctl show batterywarning 2>&1)
+	    sleep 3
+	    result_summary+="BatteryWarningの確認結果:\n$battery_warning_status\n\n"
+	    sleep 2
+	    echo "Battery Warningの「ON」設定の確認が完了しました。"
             ;;
         "Card Alarm無効の設定")
             # Alar無効設定のシェルコマンドを実行

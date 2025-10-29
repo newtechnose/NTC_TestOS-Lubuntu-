@@ -38,6 +38,7 @@ zenity --question --text="Rebootテストを開始します。「はい」を押
 
 sudo systemctl daemon-reload
 sudo systemctl enable run_reboot_status.service
+sudo systemctl restart run_reboot_status.service
 
 #/home/testos/shell/Run_Reboot_Status.sh
 

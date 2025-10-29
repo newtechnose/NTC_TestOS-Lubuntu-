@@ -87,8 +87,9 @@ if [[ "$(printf '%s\n' "$NEW_VER" "$CURRENT_VER" | sort -V | head -n1)" != "$NEW
 
     # バージョンに対応した壁紙を設定
     WALLPAPER_PATH="/home/testos/Pictures/TestOS_${NEW_VER}.png"
+
     if [[ -f "$WALLPAPER_PATH" ]]; then
-        gsettings set org.gnome.desktop.background picture-uri "file://${WALLPAPER_PATH}"
+        pcmanfm-qt --set-wallpaper "$WALLPAPER_PATH"
     else
         echo "壁紙ファイルが見つかりません：$WALLPAPER_PATH"
     fi

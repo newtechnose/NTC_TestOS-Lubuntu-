@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AI Server FAN threshold
+Comment=Run FAN threshold
+Exec=/home/testos/shell/Product_shell/AI_Server_FAN_threshold.sh
+Icon=/home/testos/Pictures/Icon/AIServer.png
+Terminal=true
+
+
+

@@ -27,7 +27,7 @@ if command -v zenity >/dev/null 2>&1; then
       "5000 (5GbE)" \
       "10000 (10GbE)" \
       "Auto (オートネゴ)" \
-      --height=300 --width=350)
+      --height=500 --width=350)
 else
     echo "テストするリンク速度を入力してください（100 / 1000 / 2500 / 5000 / 10000 / Auto）："
     read SPEED

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Grafana Monitor
+Comment=Select GPU or CPU/Memory Dashboard to open
+Exec=/home/testos/shell/open_grafana_dashboard.sh
+Icon=/home/testos/Pictures/Icon/Grafana_logo.png
+Terminal=false

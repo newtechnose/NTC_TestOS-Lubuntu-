@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo sleep 2
+
 # ====== FAN Threshold Setting Script ======
 
 # FAN リスト
@@ -12,7 +14,7 @@ choice=$(zenity --list \
     --column="選択肢" \
     "しきい値の設定を行う" \
     "デフォルト値に設定する" \
-    --width=400 --height=200)
+    --width=500 --height=300)
 
 if [ -z "$choice" ]; then
     exit 0
@@ -31,7 +33,7 @@ fan_selection=$(zenity --list \
     FALSE "SYS_FAN7" \
     FALSE "SYS_FAN8" \
     --separator=" " \
-    --width=450 --height=300)
+    --width=450 --height=600)
 
 if [ -z "$fan_selection" ]; then
     zenity --warning --text="FAN が選択されていません。" --width=250
@@ -61,7 +63,7 @@ if [ "$choice" = "しきい値の設定を行う" ]; then
     lnr=0
 
     for fan in "${selected_fans[@]}"; do
-        ipmitool sensor thresh "$fan" lower "$lnr" "$lcr" "$lnc"
+        sudo ipmitool sensor thresh "$fan" lower "$lnr" "$lcr" "$lnc"
     done
 
     zenity --info --text="選択された FAN のしきい値を設定しました。\nLNR=0 / LCR=$lcr / LNC=$lnc" --width=320
@@ -78,7 +80,7 @@ if [ "$choice" = "デフォルト値に設定する" ]; then
     default_lnc=1500
 
     for fan in "${selected_fans[@]}"; do
-        ipmitool sensor thresh "$fan" lower "$default_lnr" "$default_lcr" "$default_lnc"
+        sudo ipmitool sensor thresh "$fan" lower "$default_lnr" "$default_lcr" "$default_lnc"
     done
 
     zenity --info --text="選択された FAN をデフォルト値に戻しました。\nLNR=0 / LCR=1200 / LNC=1500" --width=330

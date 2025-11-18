@@ -26,12 +26,12 @@ fan_selection=$(zenity --list \
     --text="しきい値を変更する FAN を選んでください（複数選択可）" \
     --checklist \
     --column="選択" --column="FAN 名" \
-    FALSE "SYS_FAN1" \
-    FALSE "SYS_FAN2" \
-    FALSE "SYS_FAN3" \
-    FALSE "SYS_FAN4" \
-    FALSE "SYS_FAN7" \
-    FALSE "SYS_FAN8" \
+    TRUE "SYS_FAN1" \
+    TRUE "SYS_FAN2" \
+    TRUE "SYS_FAN3" \
+    TRUE "SYS_FAN4" \
+    TRUE "SYS_FAN7" \
+    TRUE "SYS_FAN8" \
     --separator=" " \
     --width=450 --height=600)
 

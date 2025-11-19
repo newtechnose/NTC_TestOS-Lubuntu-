@@ -3,6 +3,7 @@ set -e
 
 # ================================================
 # GPU負荷テストスクリプト（Zenity GUI + キャンセル即停止 + 固定Docker名）
+# 休憩時間は秒単位で入力
 # ================================================
 
 LOG_DIR="/home/testos/gpu-burn/gpu_logs"
@@ -25,23 +26,24 @@ trap cleanup INT TERM
 # ==============================
 
 zenity --info --width 600 --title="GPU負荷テスト開始" \
-  --text="GPU負荷試験ツール gpu_burn を起動します。\nウィンドウのOKを押して設定 を入力してください"
+  --text="GPU負荷試験ツール gpu_burn を起動します。\nウィンドウのOKを押して設定を入力してください"
 
 # ログ削除確認
 zenity --question --title="確認" --text="最初にログを削除して開始しますか？"
 [ $? -eq 0 ] && rm -rf "$LOG_DIR" && mkdir -p "$LOG_DIR" || exit 0
 
 # サイクル回数
-NUM_CYCLES=$(zenity --entry --title="サイクル回数" --text="サイクルを入力してく ださい（例：5）")
+NUM_CYCLES=$(zenity --entry --title="サイクル回数" --text="サイクルを入力してください（例：5）")
 [ -z "$NUM_CYCLES" ] && cleanup
 
 # GPU-burn 実行時間
 GPU_BURN_TIME=$(zenity --entry --title="GPU-burn実行時間" --text="GPU-burnの実行時間(秒)")
 [ -z "$GPU_BURN_TIME" ] && cleanup
 
-# 休憩時間（例: 50s, 1m）
-BREAK_TIME=$(zenity --entry --title="休憩時間" --text="休憩時間を入力してくださ い（例: 50s, 1m）")
+# 休憩時間（秒で入力）
+BREAK_TIME=$(zenity --entry --title="休憩時間" --text="休憩時間を秒単位で入力してください（例: 50）")
 [ -z "$BREAK_TIME" ] && cleanup
+BREAK_SECONDS="$BREAK_TIME"
 
 # nvidia-smi 取得間隔
 NVSMI_TIME=$(zenity --entry --title="nvidia-smi間隔" --text="nvidia-smi取得間隔(秒)")
@@ -87,21 +89,17 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
 
     # 休憩時間を進捗付きで表示
     if [ $i -lt $NUM_CYCLES ]; then
-        # 秒に変換できる場合のみsleep進捗表示
-        SECONDS_WAIT=0
-        # Zenityで進捗表示
         (
-        while true; do
+        SECONDS_WAIT=0
+        while [ $SECONDS_WAIT -lt $BREAK_SECONDS ]; do
             sleep 1
             SECONDS_WAIT=$((SECONDS_WAIT+1))
-            echo $(( (SECONDS_WAIT*100)/10 )) # 仮の割合
-            echo "# Cycle $i 休憩中 ($SECONDS_WAIT秒)"
-            # 休憩終了判定
-            break_seconds=$(echo "$BREAK_TIME" | sed -e 's/s$//' -e 's/m$/*60/' -e 's/h$/*3600/' | bc 2>/dev/null)
-            if [ -z "$break_seconds" ]; then break; fi
-            if [ $SECONDS_WAIT -ge $break_seconds ]; then break; fi
+            PERCENT=$((SECONDS_WAIT*100/BREAK_SECONDS))
+            echo "$PERCENT"
+            echo "# Cycle $i 休憩中 ($SECONDS_WAIT/$BREAK_SECONDS 秒)"
         done
         ) | zenity --progress --title="休憩中" --text="Cycle $i 休憩中..." --percentage=0 --auto-close --cancel-label="終了"
+
         # キャンセル判定
         [ $? -ne 0 ] && cleanup
     fi

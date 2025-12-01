@@ -60,7 +60,7 @@ phison_count=0
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4" ]]; then
             ((wd_count++))
         elif [[ "$device_model" =~ "ST2000NM000B"|"ST4000NM024B"|"ST8000NM017B"|"ST16000NM000J"|"ST20000NM004E" ]]; then
             ((seagate_count++))
@@ -139,7 +139,7 @@ done
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4" ]]; then
             echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
 
             # 各SMART値を数値として取得（10進数指定）

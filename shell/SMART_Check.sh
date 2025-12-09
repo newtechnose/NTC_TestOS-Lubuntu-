@@ -19,7 +19,7 @@ index=1
 while read -r line; do
     if [[ $line =~ ^ディスク\ (/dev/sd[a-z]+): ]]; then
         current_dev=${BASH_REMATCH[1]}
-    elif [[ $line =~ ディスク型式:\ (MR|SAS) ]]; then
+    elif [[ $line =~ Disk\ model:\ (MR|SAS) ]]; then
         if [[ -n $current_dev ]]; then
             mr_disks[$current_dev]="MR Disk Found"
             eval "Disk_fdisk${index}=$current_dev"

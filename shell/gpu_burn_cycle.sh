@@ -18,15 +18,13 @@ cleanup() {
     [[ -n "$CONTAINER_ID" ]] && docker kill "$CONTAINER_ID" 2>/dev/null || true
     exit 1
 }
-
 trap cleanup INT TERM
 
 # ==============================
 # Zenityでユーザー入力
 # ==============================
-
 zenity --info --width 600 --title="GPU負荷テスト開始" \
-  --text="GPU負荷試験ツール gpu_burn を起動します。\nウィンドウのOKを押して設定を入力してください"
+    --text="GPU負荷試験ツール gpu_burn を起動します。\nウィンドウのOKを押して設定を入力してください"
 
 # ログ削除確認
 zenity --question --title="確認" --text="最初にログを削除して開始しますか？"
@@ -65,10 +63,19 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
 
     # Docker 実行（固定Name）
     CONTAINER_NAME="gpu_burn"
+
     # もし既存コンテナがあれば強制停止
     docker ps --format '{{.Names}}' | grep -q "^$CONTAINER_NAME\$" && docker kill "$CONTAINER_NAME" >/dev/null 2>&1
+
     CONTAINER_ID=$(docker run -d --rm --gpus all --name "$CONTAINER_NAME" --init gpu_burn "$GPU_BURN_TIME")
     echo "$CONTAINER_ID" > "$LOG_DIR/cycle_$i/container_id.txt"
+
+
+# === 追加：gpu_burn の出力ログを保存 ===
+docker logs -f "$CONTAINER_ID" > "$LOG_DIR/cycle_$i/gpu_burn_output.txt" 2>&1 &
+LOGS_PID=$!
+
+
 
     # GPU-Burn 終了まで秒ごとに待機して進捗更新
     for ((s=1;s<=GPU_BURN_TIME;s++)); do
@@ -81,6 +88,11 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
 
     # コンテナ終了待ち
     docker wait "$CONTAINER_ID" >/dev/null
+
+
+    # ログ取得停止
+#    [[ -n "$LOGS_PID" ]] && kill -TERM "$LOGS_PID" 2>/dev/null
+
 
     # nvidia-smi 停止
     [[ -n "$NVSMI_PID" ]] && kill -TERM "$NVSMI_PID"
@@ -103,7 +115,6 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
         # キャンセル判定
         [ $? -ne 0 ] && cleanup
     fi
-
 done
 ) | zenity --progress --title="GPU-burn 実行中" --text="サイクルを実行中..." \
     --percentage=0 --auto-close --cancel-label="終了"
@@ -111,6 +122,42 @@ done
 # Zenityで「終了」ボタン押された場合
 [ $? -ne 0 ] && cleanup
 
+
+# ==============================
+# テスト結果判定（NGがあるか確認）
+# ==============================
+result="合格"
+
+for d in "$LOG_DIR"/cycle_*; do
+    if grep -q "NG" "$d/gpu_burn_output.txt"; then
+        result="不合格"
+        break
+    fi
+done
+
+
+
+# ===== 判定処理 =====
+if [[ "$result" == "合格"  ]]; then
+    # 合格の場合
+    zenity --info \
+        --title="GPU負荷テスト結果" \
+        --width=400 --height=200 \
+        --ok-label="閉じる" \
+        --text="<span font_desc='Sans 40' foreground='black' background='#00FF00'><b>PASSED</b></span>" \
+        --no-wrap
+else
+    # 不合格の場合
+    zenity --error \
+        --title="GPU負荷テスト結果" \
+        --width=400 --height=200 \
+        --ok-label="閉じる" \
+        --text="<span font_desc='Sans 40' foreground='black' background='#FF0000'><b>FAILED</b></span>" \
+        --no-wrap
+fi
+
+
+
 # 完了メッセージ
 zenity --info --width 600 --title="完了" \
-  --text="GPU負荷テストが終了しました。\nログは $LOG_DIR に保存されています。"
+    --text="GPU負荷テストが終了しました。\n結果：$result\nログは $LOG_DIR に保存されています。"

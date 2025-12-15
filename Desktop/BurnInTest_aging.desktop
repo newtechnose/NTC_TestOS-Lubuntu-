@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=BurnInTest 24H
+Comment=Run BurnInTest 24H
+Exec=/home/testos/shell/BurnInTest_aging.sh
+Icon=/home/testos/Pictures/Icon/BurnInTest_aging.png
+Terminal=true
+
+
+

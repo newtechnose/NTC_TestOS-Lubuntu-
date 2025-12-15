@@ -28,19 +28,21 @@ case "$MODE" in
         declare -a test_results
 
         # 結果セクションを抽出
-        results_section=$(grep -E 'Disk: /dev/sda ' "$log_file" )
+        results_section=$(grep -E 'CPU - Maths|Memory \(RAM\)' "$log_file" )
 
         # 各行を変数に格納
         while IFS= read -r line; do
-	        test_results+=("$line")
+        	test_results+=("$line")
         done <<< "$results_section"
 
-
         # 各テスト結果を個別の変数に保存
-        disk_sda=$(echo "${test_results[0]}")
+        cpu_maths=$(echo "${test_results[0]}")
+        memory_ram=$(echo "${test_results[1]}")
 
         # 最後の行を取得
         last_line=$(grep "TEST RUN" "$log_file" | tail -n 1)
+
+
 
         # 結果を判定
         if [[ "$last_line" == *"PASSED"* ]]; then
@@ -122,22 +124,24 @@ case "$MODE" in
         log_file="/home/testos/V4/burnintest/logs/BurnInTest_24h_CL1_Result.log"
 
         # テスト結果を格納するための配列
-        declare -a test_results
+    	declare -a test_results
 
-        # 結果セクションを抽出
-        results_section=$(grep -E "Disk: $smallest_disk " "$log_file")
+    	# 結果セクションを抽出
+    	results_section=$(grep -E "CPU - Maths|Memory \(RAM\)|Disk: $smallest_disk " "$log_file")
 
-        # 各行を変数に格納
-        while IFS= read -r line; do
-	        test_results+=("$line")
-        done <<< "$results_section"
+	# 各行を変数に格納
+	while IFS= read -r line; do
+	    test_results+=("$line")
+	done <<< "$results_section"
+
+	# 各テスト結果を個別の変数に保存
+	cpu_maths=$(echo "${test_results[0]}")
+	memory_ram=$(echo "${test_results[1]}")
+	disk=$(echo "${test_results[2]}")
 
 
-        # 各テスト結果を個別の変数に保存
-        disk_sda=$(echo "${test_results[0]}")
-
-        # 最後の行を取得
-        last_line=$(grep "TEST RUN" "$log_file" | tail -n 1)
+	# 最後の行を取得
+	last_line=$(grep "TEST RUN" "$log_file" | tail -n 1)
 
         # 結果を判定
         if [[ "$last_line" == *"PASSED"* ]]; then

@@ -1,14 +1,20 @@
-MODE=$(zenity --list \
-    --title="BurnInTest 起動モード選択" \
-    --column="起動モード" \
-    "エージング24時間" \
-    "エージング24時間（Cloudy 1U）")
+#!/bin/bash
+set -e
 
-[ $? -ne 0 ] && exit 1
+echo "=============================================="
+echo " BurnInTest 起動モードを選択してください"
+echo "=============================================="
+echo "1) エージング24時間"
+echo "2) エージング24時間（Cloudy 1U）"
+echo "=============================================="
+read -p "選択 [1-2]: " MODE
+
 
 case "$MODE" in
 
-    "エージング24時間")
+    1)
+
+    # エージング24時間
         cd /home/testos/V4/burnintest/64bit
         sudo ./bit_cmd_line_x64 -C /home/testos/BurnInTest_cfg/24h.cfg
         sleep 3
@@ -68,7 +74,9 @@ case "$MODE" in
         ;;
 
 
-    "エージング24時間（Cloudy 1U）")
+    2)
+
+    # エージング24時間（Cloudy 1U）
         # sudo fdisk -l を実行し、ディスク型式がMRから始まるデバイスの/dev/sd〇を特定
         declare -A mr_disks
         current_dev=""
@@ -117,7 +125,7 @@ case "$MODE" in
         declare -a test_results
 
         # 結果セクションを抽出
-        results_section=$(grep -E 'Disk: /dev/sda ' "$log_file" )
+        results_section=$(grep -E "Disk: $smallest_disk " "$log_file")
 
         # 各行を変数に格納
         while IFS= read -r line; do
@@ -160,6 +168,11 @@ case "$MODE" in
         fi
 
         zenity --info --text="システム負荷テストが完了しました。\n「FAILED」の場合は/home/testos/V4/burnintest/logsの中を参照してください。" --width=600 --height=200
+        ;;
+
+    *)
+        echo "不正な入力です"
+        exit 1
         ;;
 esac
 

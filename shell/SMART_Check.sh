@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# バージョン番号を変数に設定
+TOOL_VER="1.01"
+
+# Zenityで最初にメッセージ表示
+zenity --info --title="S.M.A.R.T自動判定ツール" --text="S.M.A.R.T自動判定ツール Ver${TOOL_VER}を実行します"
+
+
 cd /opt/MegaRAID/storcli/
 
 # storcli64コマンドを実行し、DIDのリストを取得
@@ -60,9 +67,11 @@ phison_count=0
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4"|"WDC  WUH722016CLE6L4" ]]; then
             ((wd_count++))
-        elif [[ "$device_model" =~ "ST2000NM000B"|"ST4000NM024B"|"ST8000NM017B"|"ST16000NM000J"|"ST20000NM004E" ]]; then
+        elif [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
+            ((wd4_count++)) 
+        elif [[ "$device_model" =~ "ST2000NM000B"|"ST2000VX008"|"ST4000NM024B"|"ST8000NM000A"|"ST8000NM017B"|"ST16000NM000J"|"ST16000NM002H"|"ST20000NM004E"|"ST24000NM002H" ]]; then
             ((seagate_count++))
         elif [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
             ((phison_count++)) 
@@ -71,11 +80,13 @@ for file in "$data_dir"/*.txt; do
 done
 
 # Zenity の表示（1回のみ）
-if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0 ]]; then
+if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0 && $wd4_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd_count}本でS.M.A.R.T情報を判定します"
-elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 ]]; then
+elif [[ $wd4_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_count -eq 0 ]]; then
+    zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd4_count}本でS.M.A.R.T情報を判定します"
+elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $wd4_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count}本でS.M.A.R.T情報を判定します"
-elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 ]]; then
+elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 && $wd4_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本でS.M.A.R.T情報を判定します"
 else
     zenity --error --title="エラー" --text="対応していないHDD・SSDモデルが含まれています。"
@@ -91,7 +102,7 @@ ALL_PASS=true
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "ST2000NM000B"|"ST4000NM024B"|"ST8000NM017B"|"ST16000NM000J"|"ST20000NM004E" ]]; then
+        if [[ "$device_model" =~ "ST2000NM000B"|"ST2000VX008"|"ST4000NM024B"|"ST8000NM000A"|"ST8000NM017B"|"ST16000NM000J"|"ST16000NM002H"|"ST20000NM004E"|"ST24000NM002H" ]]; then
         SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
         DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
 
@@ -130,6 +141,7 @@ for file in "$data_dir"/*.txt; do
         else
             echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
             ALL_PASS=false
+            FAILED_DISKS+=("$SLOT_ID:$DID_ID")
         fi
         fi
     fi
@@ -167,10 +179,49 @@ for file in "$data_dir"/*.txt; do
             else
                 echo "WD HDD: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
 done
+
+
+# WD HDD 4TB の S.M.A.R.T 判定
+for file in "$data_dir"/*.txt; do
+    if [[ -f "$file" ]]; then
+        device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
+        if [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
+            echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
+
+            # 各SMART値を数値として取得（10進数指定）
+            WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
+            WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
+            RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
+            WORST_196=$((10#$(awk '$1 == "196" {print $5}' "$file")))
+            RAW_196=$((10#$(awk '$1 == "196" {print $10}' "$file")))
+            WORST_197=$((10#$(awk '$1 == "197" {print $5}' "$file")))
+            RAW_197=$((10#$(awk '$1 == "197" {print $10}' "$file")))
+            WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
+            RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
+
+            # 判定条件（WD HDD）
+            if [[ "$WORST_1" -eq 200 ]] &&
+               [[ "$WORST_5" -eq 200 && "$RAW_5" -eq 0 ]] &&
+               [[ "$WORST_196" -eq 200 && "$RAW_196" -eq 0 ]] &&
+               [[ "$WORST_197" -eq 200 && "$RAW_197" -eq 0 ]] &&
+               [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+                echo "WD HDD: 合格" | tee -a "$RESULT_FILE"
+            else
+                echo "WD HDD: 不合格" | tee -a "$RESULT_FILE"
+                ALL_PASS=false
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
+            fi
+        fi
+    fi
+done
+
+
+
 
 # phison SSD の S.M.A.R.T 判定（Slot/DID付き）
 for file in "$data_dir"/*.txt; do
@@ -208,12 +259,20 @@ for file in "$data_dir"/*.txt; do
             else
                 echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
 done
 
-
+# 不合格ディスクを赤点灯
+for disk in "${FAILED_DISKS[@]}"; do
+    SLOT=${disk%%:*}
+    DID=${disk##*:}
+    echo "Starting locate LED for Slot${SLOT} DID${DID}..."
+    # storcli64コマンド実行
+    sudo ./storcli64 /c0 /eall /s${SLOT} start locate
+done
 
 
 # 判定結果

@@ -86,11 +86,11 @@ if [[ $wd_count -gt 0 && $seagate_count -eq 0 && $phison_count -eq 0 && $wd4_cou
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd_count}本でS.M.A.R.T情報を判定します"
 elif [[ $wd4_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_count -eq 0 && $hgst_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd4_count}本でS.M.A.R.T情報を判定します"
-elif [[ $hgst_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_count -eq 0 && $wd4_count -eq 0]]; then
+elif [[ $hgst_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_count -eq 0 && $wd4_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd4_count}本でS.M.A.R.T情報を判定します"
-elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0]]; then
+elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count}本でS.M.A.R.T情報を判定します"
-elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0]]; then
+elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本でS.M.A.R.T情報を判定します"
 else
     zenity --error --title="エラー" --text="対応していないHDD・SSDモデルが含まれています。"

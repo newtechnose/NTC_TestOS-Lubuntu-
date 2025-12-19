@@ -12,12 +12,18 @@ cd /opt/MegaRAID/storcli/
 # storcli64コマンドを実行し、DIDのリストを取得
 did_list=( $(sudo ./storcli64 /c0 /eall /sall show J | jq -r '."Controllers"[0]."Response Data"."Drive Information"[]["DID"]') )
 
-# 取得したDIDの値をSlot0_DID, Slot1_DID, ... の変数に代入
-i=0
-for did in "${did_list[@]}"; do
-    eval "Slot${i}_DID=$did"
-    ((i++))
-done
+# Slot番号 → DID の対応を作成（storcliの実Slot番号を使用）
+declare -A SLOT_DID_MAP
+
+while read -r slot did; do
+    SLOT_DID_MAP[$slot]=$did
+done < <(
+    sudo ./storcli64 /c0 /eall /sall show J |
+    jq -r '."Controllers"[0]."Response Data"."Drive Information"[]
+           | select(.["EID:Slt"] != null)
+           | .["EID:Slt"] as $es
+           | ($es | split(":")[1]) + " " + (.DID|tostring)'
+)
 
 # sudo fdisk -l を実行し、ディスク型式がMRから始まるデバイスの/dev/sd〇を特定
 declare -A mr_disks
@@ -39,7 +45,7 @@ done < <(sudo fdisk -l)
 smallest_disk=$(printf "%s\n" ${!mr_disks[@]} | sort | head -n 1)
 
 # Zenityを使用してフォルダ名を取得
-dir_name=$(zenity --entry --title="フォルダ名入力" --text="保存するフォルダ名を入力してください")
+dir_name=$(zenity --entry --title="フォルダ名入力" --text="保存するフォルダ名を 入力してください")
 if [[ -z "$dir_name" ]]; then
     echo "フォルダ名が入力されませんでした。処理を中断します。"
     exit 1
@@ -50,12 +56,10 @@ data_dir="/home/testos/SMART_inport/$dir_name"
 mkdir -p "$data_dir"
 
 echo "Executing smartctl for each Slot_DID with the first Disk_fdisk and saving output to $data_dir:"
-for ((j=0; j<i; j++)); do
-    eval "current_did=\$Slot${j}_DID"
-    if [[ -n "$current_did" ]]; then
-        output_file="$data_dir/SMART_Slot${j}_DID${current_did}.txt"
-        sudo smartctl -a -d megaraid,$current_did $smallest_disk > "$output_file"
-    fi
+for SLOT in "${!SLOT_DID_MAP[@]}"; do
+    DID=${SLOT_DID_MAP[$SLOT]}
+    output_file="$data_dir/SMART_Slot${SLOT}_DID${DID}.txt"
+    sudo smartctl -a -d megaraid,$DID $smallest_disk > "$output_file"
 done
 
 echo "SMART data saved in $data_dir"
@@ -70,13 +74,13 @@ for file in "$data_dir"/*.txt; do
         if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4"|"WDC  WUH722016CLE6L4" ]]; then
             ((wd_count++))
         elif [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
-            ((wd4_count++)) 
+            ((wd4_count++))
         elif [[ "$device_model" =~ "HGST  HUS726T4TALE6L4" ]]; then
-            ((hgst_count++)) 
+            ((hgst_count++))
         elif [[ "$device_model" =~ "ST2000NM000B"|"ST2000VX008"|"ST4000NM024B"|"ST8000NM000A"|"ST8000NM017B"|"ST16000NM000J"|"ST16000NM002H"|"ST20000NM004E"|"ST24000NM002H" ]]; then
             ((seagate_count++))
         elif [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
-            ((phison_count++)) 
+            ((phison_count++))
         fi
     fi
 done
@@ -89,9 +93,9 @@ elif [[ $wd4_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_c
 elif [[ $hgst_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $seagate_count -eq 0 && $wd4_count -eq 0 ]]; then
     zenity --info --title="S.M.A.R.T 判定" --text="WD HDD ${wd4_count}本でS.M.A.R.T情報を判定します"
 elif [[ $seagate_count -gt 0 && $wd_count -eq 0 && $phison_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0 ]]; then
-    zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count}本でS.M.A.R.T情報を判定します"
+    zenity --info --title="S.M.A.R.T 判定" --text="Seagate HDD ${seagate_count} 本でS.M.A.R.T情報を判定します"
 elif [[ $phison_count -gt 0 && $seagate_count -eq 0 && $wd_count -eq 0 && $wd4_count -eq 0 && $hgst_count -eq 0 ]]; then
-    zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本でS.M.A.R.T情報を判定します"
+    zenity --info --title="S.M.A.R.T 判定" --text="phison SSD ${phison_count}本 でS.M.A.R.T情報を判定します"
 else
     zenity --error --title="エラー" --text="対応していないHDD・SSDモデルが含まれています。"
     exit 1
@@ -324,8 +328,7 @@ done
 
 # 判定結果
 if [[ "$ALL_PASS" == true ]]; then
-    zenity --info --title="S.M.A.R.T 判定結果" --text="すべてのディスクは合格しました。"
+    zenity --info --title="S.M.A.R.T 判定結果" --text="すべてのディスクは合格し ました。"
 else
-    zenity --error --title="S.M.A.R.T 判定結果" --text="いくつかのディスクが不合格でした。"
+    zenity --error --title="S.M.A.R.T 判定結果" --text="いくつかのディスクが不合格でした。不合格Diskが赤点滅しています。"
 fi
-

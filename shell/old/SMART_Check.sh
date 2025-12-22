@@ -6,25 +6,23 @@ TOOL_VER="1.02"
 # Zenityで最初にメッセージ表示
 zenity --info --title="S.M.A.R.T自動判定ツール" --text="S.M.A.R.T自動判定ツール Ver${TOOL_VER}を実行します"
 
+
 cd /opt/MegaRAID/storcli/
 
 # storcli64コマンドを実行し、DIDのリストを取得
 did_list=( $(sudo ./storcli64 /c0 /eall /sall show J | jq -r '."Controllers"[0]."Response Data"."Drive Information"[]["DID"]') )
 
 # Slot番号 → DID の対応を作成（storcliの実Slot番号を使用）
-declare -A DRIVE_MAP
-while read -r ctrl encl slot did; do
-    key="${ctrl}:${encl}:${slot}"
-    DRIVE_MAP[$key]=$did
+declare -A SLOT_DID_MAP
+
+while read -r slot did; do
+    SLOT_DID_MAP[$slot]=$did
 done < <(
-    sudo ./storcli64 /call /eall /sall show J | jq -r '
-        .Controllers[] |
-        ."Command Status"."Controller" as $c |
-        ."Response Data"."Drive Information"[] |
-        select(.["EID:Slt"] != null) |
-        .["EID:Slt"] as $es |
-        ($c | tostring) + " " + ($es | split(":")[0]) + " " + ($es | split(":")[1]) + " " + (.DID | tostring)
-    '
+    sudo ./storcli64 /c0 /eall /sall show J |
+    jq -r '."Controllers"[0]."Response Data"."Drive Information"[]
+           | select(.["EID:Slt"] != null)
+           | .["EID:Slt"] as $es
+           | ($es | split(":")[1]) + " " + (.DID|tostring)'
 )
 
 # sudo fdisk -l を実行し、ディスク型式がMRから始まるデバイスの/dev/sd〇を特定
@@ -58,12 +56,10 @@ data_dir="/home/testos/SMART_inport/$dir_name"
 mkdir -p "$data_dir"
 
 echo "Executing smartctl for each Slot_DID with the first Disk_fdisk and saving output to $data_dir:"
-
-for key in "${!DRIVE_MAP[@]}"; do
-    IFS=":" read -r C E S <<< "$key"
-    DID=${DRIVE_MAP[$key]}
-    output_file="$data_dir/SMART_c${C}_e${E}_s${S}_DID${DID}.txt"
-    sudo smartctl -a -d megaraid,${DID} $smallest_disk > "$output_file"
+for SLOT in "${!SLOT_DID_MAP[@]}"; do
+    DID=${SLOT_DID_MAP[$SLOT]}
+    output_file="$data_dir/SMART_Slot${SLOT}_DID${DID}.txt"
+    sudo smartctl -a -d megaraid,$DID $smallest_disk > "$output_file"
 done
 
 echo "SMART data saved in $data_dir"
@@ -72,15 +68,14 @@ echo "SMART data saved in $data_dir"
 wd_count=0
 seagate_count=0
 phison_count=0
-
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUH722020BLE6L4"|"WDC WUH722424ALE6L4"|"WDC WUH722016CLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4"|"WDC  WUH722016CLE6L4" ]]; then
             ((wd_count++))
-        elif [[ "$device_model" =~ "WDC WUS721204BLE6L4" ]]; then
+        elif [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
             ((wd4_count++))
-        elif [[ "$device_model" =~ "HGST HUS726T4TALE6L4" ]]; then
+        elif [[ "$device_model" =~ "HGST  HUS726T4TALE6L4" ]]; then
             ((hgst_count++))
         elif [[ "$device_model" =~ "ST2000NM000B"|"ST2000VX008"|"ST4000NM024B"|"ST8000NM000A"|"ST8000NM017B"|"ST16000NM000J"|"ST16000NM002H"|"ST20000NM004E"|"ST24000NM002H" ]]; then
             ((seagate_count++))
@@ -107,44 +102,55 @@ else
 fi
 
 # Seagate HDD の S.M.A.R.T 判定
-RESULT_FILE="$data_dir/result.txt" > "$RESULT_FILE"
+RESULT_FILE="$data_dir/result.txt"
+> "$RESULT_FILE"
+
 ALL_PASS=true
 
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
-        C_ID=$(echo "$file" | sed -E 's/.*SMART_c([0-9]+)_e([0-9]+)_s([0-9]+)_DID([0-9]+).txt/\1/')
-        E_ID=$(echo "$file" | sed -E 's/.*SMART_c([0-9]+)_e([0-9]+)_s([0-9]+)_DID([0-9]+).txt/\2/')
-        SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_c([0-9]+)_e([0-9]+)_s([0-9]+)_DID([0-9]+).txt/\3/')
-        DID_ID=$(echo "$file" | sed -E 's/.*SMART_c([0-9]+)_e([0-9]+)_s([0-9]+)_DID([0-9]+).txt/\4/')
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-
         if [[ "$device_model" =~ "ST2000NM000B"|"ST2000VX008"|"ST4000NM024B"|"ST8000NM000A"|"ST8000NM017B"|"ST16000NM000J"|"ST16000NM002H"|"ST20000NM004E"|"ST24000NM002H" ]]; then
-            echo "Checking c${C_ID} e${E_ID} s${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
-            # 各SMART値を数値として取得（10進数指定）
-            WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
-            WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
-            RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
-            WORST_7=$((10#$(awk '$1 == "7" {print $5}' "$file")))
-            WORST_10=$((10#$(awk '$1 == "10" {print $5}' "$file")))
-            RAW_10=$((10#$(awk '$1 == "10" {print $10}' "$file")))
-            WORST_18=$((10#$(awk '$1 == "18" {print $5}' "$file")))
-            WORST_187=$((10#$(awk '$1 == "187" {print $5}' "$file")))
-            RAW_187=$((10#$(awk '$1 == "187" {print $10}' "$file")))
-            VALUE_188=$((10#$(awk '$1 == "188" {print $4}' "$file")))
-            WORST_190=$((10#$(awk '$1 == "190" {print $5}' "$file")))
-            WORST_197=$((10#$(awk '$1 == "197" {print $5}' "$file")))
-            RAW_197=$((10#$(awk '$1 == "197" {print $10}' "$file")))
-            WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
-            RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
+        SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
+        DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
 
-            # 判定条件
-            if [[ "$WORST_1" -ge 47 ]] && [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] && [[ "$WORST_7" -ge 47 ]] && [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] && [[ "$WORST_18" -eq 100 ]] && [[ "$WORST_187" -eq 100 && "$RAW_187" -eq 0 ]] && [[ "$VALUE_188" -eq 100 ]] && [[ "$WORST_190" -ge 41 ]] && [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] && [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
-                echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
-            else
-                echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
-                ALL_PASS=false
-                FAILED_DISKS+=("${C_ID}:${E_ID}:${SLOT_ID}:${DID_ID}")
-            fi
+        echo "Checking Slot${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
+
+        # 各SMART値を数値として取得（10進数指定）
+        WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
+        WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
+        RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
+        WORST_7=$((10#$(awk '$1 == "7" {print $5}' "$file")))
+        WORST_10=$((10#$(awk '$1 == "10" {print $5}' "$file")))
+        RAW_10=$((10#$(awk '$1 == "10" {print $10}' "$file")))
+        WORST_18=$((10#$(awk '$1 == "18" {print $5}' "$file")))
+        WORST_187=$((10#$(awk '$1 == "187" {print $5}' "$file")))
+        RAW_187=$((10#$(awk '$1 == "187" {print $10}' "$file")))
+        VALUE_188=$((10#$(awk '$1 == "188" {print $4}' "$file")))
+        WORST_190=$((10#$(awk '$1 == "190" {print $5}' "$file")))
+        WORST_197=$((10#$(awk '$1 == "197" {print $5}' "$file")))
+        RAW_197=$((10#$(awk '$1 == "197" {print $10}' "$file")))
+        WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
+        RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
+
+        # 判定条件
+        if [[ "$WORST_1" -ge 47 ]] &&
+           [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] &&
+           [[ "$WORST_7" -ge 47 ]] &&
+           [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] &&
+           [[ "$WORST_18" -eq 100 ]] &&
+           [[ "$WORST_187" -eq 100 && "$RAW_187" -eq 0 ]] &&
+           [[ "$VALUE_188" -eq 100 ]] &&
+           [[ "$WORST_190" -ge 41 ]] &&
+           [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] &&
+           [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+
+            echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
+        else
+            echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
+            ALL_PASS=false
+            FAILED_DISKS+=("$SLOT_ID:$DID_ID")
+        fi
         fi
     fi
 done
@@ -153,7 +159,7 @@ done
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUH722020BLE6L4"|"WDC WUH722424ALE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4" ]]; then
             echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
 
             # 各SMART値を数値として取得（10進数指定）
@@ -172,24 +178,33 @@ for file in "$data_dir"/*.txt; do
             RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
 
             # 判定条件（WD HDD）
-            if [[ "$WORST_1" -eq 100 ]] && [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] && [[ "$WORST_7" -eq 100 && "$RAW_7" -eq 0 ]] && [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] && [[ "$WORST_22" -eq 100 ]] && [[ "$WORST_196" -eq 100 && "$RAW_196" -eq 0 ]] && [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] && [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+            if [[ "$WORST_1" -eq 100 ]] &&
+               [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] &&
+               [[ "$WORST_7" -eq 100 && "$RAW_7" -eq 0 ]] &&
+               [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] &&
+               [[ "$WORST_22" -eq 100 ]] &&
+               [[ "$WORST_196" -eq 100 && "$RAW_196" -eq 0 ]] &&
+               [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] &&
+               [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
                 echo "WD HDD: 合格" | tee -a "$RESULT_FILE"
             else
                 echo "WD HDD: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
-                FAILED_DISKS+=("${C_ID}:${E_ID}:${SLOT_ID}:${DID_ID}")
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
 done
 
+
 # WD HDD 4TB の S.M.A.R.T 判定
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUS721204BLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
             echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
 
+            # 各SMART値を数値として取得（10進数指定）
             WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
             WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
             RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
@@ -200,24 +215,32 @@ for file in "$data_dir"/*.txt; do
             WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
             RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
 
-            if [[ "$WORST_1" -eq 200 ]] && [[ "$WORST_5" -eq 200 && "$RAW_5" -eq 0 ]] && [[ "$WORST_196" -eq 200 && "$RAW_196" -eq 0 ]] && [[ "$WORST_197" -eq 200 && "$RAW_197" -eq 0 ]] && [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+            # 判定条件（WD HDD）
+            if [[ "$WORST_1" -eq 200 ]] &&
+               [[ "$WORST_5" -eq 200 && "$RAW_5" -eq 0 ]] &&
+               [[ "$WORST_196" -eq 200 && "$RAW_196" -eq 0 ]] &&
+               [[ "$WORST_197" -eq 200 && "$RAW_197" -eq 0 ]] &&
+               [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
                 echo "WD HDD: 合格" | tee -a "$RESULT_FILE"
             else
                 echo "WD HDD: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
-                FAILED_DISKS+=("${C_ID}:${E_ID}:${SLOT_ID}:${DID_ID}")
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
 done
 
+
+
 # HGST HDD 4TB の S.M.A.R.T 判定
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "HGST HUS726T4TALE6L4" ]]; then
+        if [[ "$device_model" =~ "HGST  HUS726T4TALE6L4" ]]; then
             echo "Checking HGST HDD: $device_model..." | tee -a "$RESULT_FILE"
 
+            # 各SMART値を数値として取得（10進数指定）
             WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))
             WORST_5=$((10#$(awk '$1 == "5" {print $5}' "$file")))
             RAW_5=$((10#$(awk '$1 == "5" {print $10}' "$file")))
@@ -231,42 +254,63 @@ for file in "$data_dir"/*.txt; do
             WORST_198=$((10#$(awk '$1 == "198" {print $5}' "$file")))
             RAW_198=$((10#$(awk '$1 == "198" {print $10}' "$file")))
 
-            if [[ "$WORST_1" -eq 100 ]] && [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] && [[ "$WORST_7" -eq 100 && "$RAW_7" -eq 0 ]] && [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] && [[ "$WORST_196" -eq 100 && "$RAW_196" -eq 0 ]] && [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] && [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
+            # 判定条件（WD HDD）
+            if [[ "$WORST_1" -eq 100 ]] &&
+               [[ "$WORST_5" -eq 100 && "$RAW_5" -eq 0 ]] &&
+               [[ "$WORST_7" -eq 100 && "$RAW_7" -eq 0 ]] &&
+               [[ "$WORST_10" -eq 100 && "$RAW_10" -eq 0 ]] &&
+               [[ "$WORST_196" -eq 100 && "$RAW_196" -eq 0 ]] &&
+               [[ "$WORST_197" -eq 100 && "$RAW_197" -eq 0 ]] &&
+               [[ "$WORST_198" -eq 100 && "$RAW_198" -eq 0 ]]; then
                 echo "WD HDD: 合格" | tee -a "$RESULT_FILE"
             else
                 echo "WD HDD: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
-                FAILED_DISKS+=("${C_ID}:${E_ID}:${SLOT_ID}:${DID_ID}")
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
 done
+
+
 
 # phison SSD の S.M.A.R.T 判定（Slot/DID付き）
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
         if [[ "$device_model" =~ "PHSSS01T9ECTJ-IA-NE1100" ]]; then
+            # ファイル名から Slot と DID を取得
             SLOT_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\1/')
             DID_ID=$(echo "$file" | sed -E 's/.*SMART_Slot([0-9]+)_DID([0-9]+).txt/\2/')
+
             echo "Checking Slot${SLOT_ID} DID${DID_ID}..." | tee -a "$RESULT_FILE"
 
+            # SMART値の取得
             VALUE_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $4}' "$file")
             WORST_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $5}' "$file")
             RAW_1=$(awk '$1=="1" && $2=="Raw_Read_Error_Rate"{print $NF}' "$file")
+
             RAW_168=$(awk '$1=="168"{print $NF}' "$file")
+
             VALUE_170=$(awk '$1=="170"{print $4}' "$file")
             WORST_170=$(awk '$1=="170"{print $5}' "$file")
+
             VALUE_218=$(awk '$1=="218"{print $4}' "$file")
             WORST_218=$(awk '$1=="218"{print $5}' "$file")
+
             RAW_231=$(awk '$1=="231"{print $NF}' "$file")
 
-            if [[ "$VALUE_1" -eq 100 && "$WORST_1" -eq 100 && "$RAW_1" -eq 0 ]] && [[ "$RAW_168" -eq 0 ]] && [[ "$VALUE_170" -eq 100 && "$WORST_170" -eq 100 ]] && [[ "$VALUE_218" -eq 100 && "$WORST_218" -eq 100 ]] && [[ "$RAW_231" -ge 99 ]]; then
+            # 判定条件
+            if [[ "$VALUE_1" -eq 100 && "$WORST_1" -eq 100 && "$RAW_1" -eq 0 ]] &&
+               [[ "$RAW_168" -eq 0 ]] &&
+               [[ "$VALUE_170" -eq 100 && "$WORST_170" -eq 100 ]] &&
+               [[ "$VALUE_218" -eq 100 && "$WORST_218" -eq 100 ]] &&
+               [[ "$RAW_231" -ge 99 ]]; then
                 echo "Slot${SLOT_ID} DID${DID_ID}: 合格" | tee -a "$RESULT_FILE"
             else
                 echo "Slot${SLOT_ID} DID${DID_ID}: 不合格" | tee -a "$RESULT_FILE"
                 ALL_PASS=false
-                FAILED_DISKS+=("${C_ID}:${E_ID}:${SLOT_ID}:${DID_ID}")
+                FAILED_DISKS+=("$SLOT_ID:$DID_ID")
             fi
         fi
     fi
@@ -274,14 +318,17 @@ done
 
 # 不合格ディスクを赤点灯
 for disk in "${FAILED_DISKS[@]}"; do
-    IFS=':' read -r C E S D <<< "$disk"
-    echo "Starting locate LED for c${C} e${E} s${S} DID${D}..."
-    sudo ./storcli64 /c${C} /e${E} /s${S} start locate
+    SLOT=${disk%%:*}
+    DID=${disk##*:}
+    echo "Starting locate LED for Slot${SLOT} DID${DID}..."
+    # storcli64コマンド実行
+    sudo ./storcli64 /c0 /eall /s${SLOT} start locate
 done
+
 
 # 判定結果
 if [[ "$ALL_PASS" == true ]]; then
-    zenity --info --title="S.M.A.R.T 判定結果" --text="すべてのディスクは合格しました。"
+    zenity --info --title="S.M.A.R.T 判定結果" --text="すべてのディスクは合格し ました。"
 else
     zenity --error --title="S.M.A.R.T 判定結果" --text="いくつかのディスクが不合格でした。不合格Diskが赤点滅しています。"
 fi

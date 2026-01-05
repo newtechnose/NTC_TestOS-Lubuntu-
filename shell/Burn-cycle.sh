@@ -50,24 +50,18 @@ esac
 BIT_CFG="${BIT_CFG_DIR}/${GPU_TIME_LABEL}.cfg"
 [[ ! -f "$BIT_CFG" ]] && zenity --error --text="cfg が存在しません\n$BIT_CFG" && exit 1
 
-
-
-
 ###############################################
 # 開始日・開始時刻選択
 ###############################################
 DATE_SELECTED=$(zenity --calendar \
     --title="開始日を選択してください" \
-    --text="テストを開始する日付を指定してください" \
-    --date-format="%Y-%m-%d" \
-    --width=400)
+    --date-format="%Y-%m-%d")
 
 [[ -z "${DATE_SELECTED:-}" ]] && zenity --error --text="日付が選択されませんでした。" && exit 1
 
 TIME_SELECTED=$(zenity --entry \
     --title="開始時刻の指定" \
-    --text="開始する時刻を入力してください（例：14:30）" \
-    --width=300)
+    --text="開始する時刻（HH:MM）")
 
 [[ -z "${TIME_SELECTED:-}" ]] && zenity --error --text="時刻が入力されませんでした。" && exit 1
 
@@ -79,10 +73,7 @@ fi
 TARGET_SEC=$(date -d "${DATE_SELECTED} ${TIME_SELECTED}" +%s)
 NOW_SEC=$(date +%s)
 
-if (( TARGET_SEC <= NOW_SEC )); then
-    TARGET_SEC=$(date -d "tomorrow ${TIME_SELECTED}" +%s)
-fi
-
+(( TARGET_SEC <= NOW_SEC )) && TARGET_SEC=$(date -d "tomorrow ${TIME_SELECTED}" +%s)
 WAIT_SEC=$((TARGET_SEC - NOW_SEC))
 
 ###############################################
@@ -105,12 +96,11 @@ if (( WAIT_SEC > 0 )); then
     [[ "$ZEN_EXIT" -ne 0 ]] && echo "開始待機キャンセル" && exit 1
 fi
 
-
-
 ###############################################
 # cleanup / trap
 ###############################################
 cleanup() {
+    echo "=== cleanup 実行 ==="
     pkill -f bit_cmd_line_x64 2>/dev/null || true
     docker kill gpu_burn 2>/dev/null || true
     docker rm -f gpu_burn 2>/dev/null || true
@@ -123,6 +113,8 @@ trap cleanup INT TERM
 # Cycle ループ
 ###############################################
 for ((i=1;i<=NUM_CYCLES;i++)); do
+    echo "===== Cycle $i / $NUM_CYCLES 開始 ====="
+
     CYCLE_GPU_LOG_DIR="${LOG_GPU_DIR}/cycle_${i}"
     CYCLE_CPU_LOG_DIR="${LOG_CPU_DIR}/cycle_${i}"
     mkdir -p "$CYCLE_GPU_LOG_DIR" "$CYCLE_CPU_LOG_DIR"
@@ -145,7 +137,16 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
             echo $((t*100/GPU_BURN_TIME))
             echo "# Cycle $i 実行中"
         done
-    ) | zenity --progress --title="Cycle $i 実行中" --auto-close --cancel-label="停止" || cleanup
+    ) | zenity --progress \
+        --title="Cycle $i 実行中" \
+        --auto-close \
+        --cancel-label="停止"
+
+    ZEN_EXIT=${PIPESTATUS[1]}
+    if [[ "$ZEN_EXIT" -ne 0 ]]; then
+        echo "ユーザーキャンセル検知"
+        cleanup
+    fi
 
     docker wait "$CONTAINER_ID" >/dev/null 2>&1 || true
     pkill -f bit_cmd_line_x64

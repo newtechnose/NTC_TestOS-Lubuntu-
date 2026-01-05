@@ -15,6 +15,45 @@ BIT_CFG_DIR="/home/testos/BurnInTest_cfg"
 mkdir -p "$LOG_GPU_DIR" "$LOG_CPU_DIR"
 
 ###############################################
+# 入力
+###############################################
+zenity --question --title="確認" --text="ログを削除してテストを開始しますか？"
+[ $? -eq 0 ] || exit 0
+rm -rf "$LOG_GPU_DIR" "$LOG_CPU_DIR"
+mkdir -p "$LOG_GPU_DIR" "$LOG_CPU_DIR"
+
+NUM_CYCLES=$(zenity --entry --title="サイクル回数" --text="サイクル数を入力")
+BREAK_SECONDS=$(zenity --entry --title="休憩時間" --text="休憩時間(秒)")
+NVSMI_TIME=$(zenity --entry --title="nvidia-smi間隔" --text="nvidia-smi 取得間隔(秒)")
+
+GPU_TIME_LABEL=$(zenity --list \
+    --title="GPU 実行時間選択" \
+    --column="選択" \
+    5min 60min 120min 180min 1440min)
+
+for v in NUM_CYCLES BREAK_SECONDS NVSMI_TIME GPU_TIME_LABEL; do
+    [[ -z "${!v:-}" ]] && zenity --error --text="入力が不足しています" && exit 1
+done
+
+###############################################
+# GPU時間 → 秒 / cfg
+###############################################
+case "$GPU_TIME_LABEL" in
+    5min)    GPU_BURN_TIME=300 ;;
+    60min)   GPU_BURN_TIME=3600 ;;
+    120min)  GPU_BURN_TIME=7200 ;;
+    180min)  GPU_BURN_TIME=10800 ;;
+    1440min) GPU_BURN_TIME=86400 ;;
+    *) zenity --error --text="無効な時間選択" && exit 1 ;;
+esac
+
+BIT_CFG="${BIT_CFG_DIR}/${GPU_TIME_LABEL}.cfg"
+[[ ! -f "$BIT_CFG" ]] && zenity --error --text="cfg が存在しません\n$BIT_CFG" && exit 1
+
+
+
+
+###############################################
 # 開始日・開始時刻選択
 ###############################################
 DATE_SELECTED=$(zenity --calendar \
@@ -66,41 +105,7 @@ if (( WAIT_SEC > 0 )); then
     [[ "$ZEN_EXIT" -ne 0 ]] && echo "開始待機キャンセル" && exit 1
 fi
 
-###############################################
-# 入力
-###############################################
-zenity --question --title="確認" --text="ログを削除してテストを開始しますか？"
-[ $? -eq 0 ] || exit 0
-rm -rf "$LOG_GPU_DIR" "$LOG_CPU_DIR"
-mkdir -p "$LOG_GPU_DIR" "$LOG_CPU_DIR"
 
-NUM_CYCLES=$(zenity --entry --title="サイクル回数" --text="サイクル数を入力")
-BREAK_SECONDS=$(zenity --entry --title="休憩時間" --text="休憩時間(秒)")
-NVSMI_TIME=$(zenity --entry --title="nvidia-smi間隔" --text="nvidia-smi 取得間隔(秒)")
-
-GPU_TIME_LABEL=$(zenity --list \
-    --title="GPU 実行時間選択" \
-    --column="選択" \
-    5min 60min 120min 180min 1440min)
-
-for v in NUM_CYCLES BREAK_SECONDS NVSMI_TIME GPU_TIME_LABEL; do
-    [[ -z "${!v:-}" ]] && zenity --error --text="入力が不足しています" && exit 1
-done
-
-###############################################
-# GPU時間 → 秒 / cfg
-###############################################
-case "$GPU_TIME_LABEL" in
-    5min)    GPU_BURN_TIME=300 ;;
-    60min)   GPU_BURN_TIME=3600 ;;
-    120min)  GPU_BURN_TIME=7200 ;;
-    180min)  GPU_BURN_TIME=10800 ;;
-    1440min) GPU_BURN_TIME=86400 ;;
-    *) zenity --error --text="無効な時間選択" && exit 1 ;;
-esac
-
-BIT_CFG="${BIT_CFG_DIR}/${GPU_TIME_LABEL}.cfg"
-[[ ! -f "$BIT_CFG" ]] && zenity --error --text="cfg が存在しません\n$BIT_CFG" && exit 1
 
 ###############################################
 # cleanup / trap

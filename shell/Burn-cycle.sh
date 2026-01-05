@@ -32,6 +32,11 @@ for v in NUM_CYCLES BREAK_SECONDS NVSMI_TIME GPU_TIME_LABEL; do
     [[ -z "${!v:-}" ]] && zenity --error --text="入力が不足しています" && exit 1
 done
 
+
+
+
+
+
 ###############################################
 # GPU時間 → 秒 / cfg
 ###############################################
@@ -46,6 +51,54 @@ esac
 
 BIT_CFG="${BIT_CFG_DIR}/${GPU_TIME_LABEL}.cfg"
 [[ ! -f "$BIT_CFG" ]] && zenity --error --text="cfg が存在しません\n$BIT_CFG" && exit 1
+
+###############################################
+# 開始日・開始時刻選択
+###############################################
+DATE_SELECTED=$(zenity --calendar \
+    --title="開始日を選択してください" \
+    --date-format="%Y-%m-%d")
+
+[[ -z "${DATE_SELECTED:-}" ]] && zenity --error --text="日付が選択されませんでした。" && exit 1
+
+TIME_SELECTED=$(zenity --entry \
+    --title="開始時刻の指定" \
+    --text="開始する時刻（HH:MM）")
+
+[[ -z "${TIME_SELECTED:-}" ]] && zenity --error --text="時刻が入力されませんでした。" && exit 1
+
+if [[ ! "${TIME_SELECTED}" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+    zenity --error --text="時刻は HH:MM 形式で入力してください。"
+    exit 1
+fi
+
+TARGET_SEC=$(date -d "${DATE_SELECTED} ${TIME_SELECTED}" +%s)
+NOW_SEC=$(date +%s)
+
+(( TARGET_SEC <= NOW_SEC )) && TARGET_SEC=$(date -d "tomorrow ${TIME_SELECTED}" +%s)
+WAIT_SEC=$((TARGET_SEC - NOW_SEC))
+
+###############################################
+# 開始待機バー（キャンセル検知付き）
+###############################################
+if (( WAIT_SEC > 0 )); then
+    (
+        for ((s=0; s<=WAIT_SEC; s++)); do
+            sleep 1
+            echo $(( s * 100 / WAIT_SEC ))
+            echo "# テスト開始まであと $((WAIT_SEC - s)) 秒"
+        done
+    ) | zenity --progress \
+        --title="開始待機中" \
+        --percentage=0 \
+        --auto-close \
+        --cancel-label="中止"
+
+    ZEN_EXIT=${PIPESTATUS[1]}
+    [[ "$ZEN_EXIT" -ne 0 ]] && echo "開始待機キャンセル" && exit 1
+fi
+
+
 
 ###############################################
 # cleanup

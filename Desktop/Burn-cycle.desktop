@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Burn Cycle
+Comment=Run gpu_burn.sh to stress test GPU and BurnInTest
+Exec=/home/testos/shell/Burn-cycle.sh
+Icon=/home/testos/Pictures/Icon/Burn-Cycle.png
+Terminal=false
+
+

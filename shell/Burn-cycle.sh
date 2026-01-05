@@ -137,7 +137,7 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
 
     rm -f /home/testos/V4/burnintest/logs/BiTLog*.log
     cd /home/testos/V4/burnintest/64bit
-    gnome-terminal -- bash -c "sudo ./bit_cmd_line_x64 -C $BIT_CFG" &
+    qterminal -e "bash -c 'sudo ./bit_cmd_line_x64 -C $BIT_CFG'" &
 
     (
         for ((t=1;t<=GPU_BURN_TIME;t++)); do

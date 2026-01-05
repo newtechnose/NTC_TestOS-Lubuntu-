@@ -5,9 +5,6 @@ set -euo pipefail
 # Burn-cycle.sh — 日時指定・cycle別ログ・判定 完全版
 ###############################################
 
-###############################################
-# ログ・パス定義
-###############################################
 LOG_GPU_DIR="/home/testos/gpu-burn/gpu_logs"
 LOG_CPU_DIR="/home/testos/V4/burnintest/logs"
 BIT_CFG_DIR="/home/testos/BurnInTest_cfg"
@@ -51,56 +48,10 @@ BIT_CFG="${BIT_CFG_DIR}/${GPU_TIME_LABEL}.cfg"
 [[ ! -f "$BIT_CFG" ]] && zenity --error --text="cfg が存在しません\n$BIT_CFG" && exit 1
 
 ###############################################
-# 開始日・開始時刻選択
-###############################################
-DATE_SELECTED=$(zenity --calendar \
-    --title="開始日を選択してください" \
-    --date-format="%Y-%m-%d")
-
-[[ -z "${DATE_SELECTED:-}" ]] && zenity --error --text="日付が選択されませんでした。" && exit 1
-
-TIME_SELECTED=$(zenity --entry \
-    --title="開始時刻の指定" \
-    --text="開始する時刻（HH:MM）")
-
-[[ -z "${TIME_SELECTED:-}" ]] && zenity --error --text="時刻が入力されませんでした。" && exit 1
-
-if [[ ! "${TIME_SELECTED}" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
-    zenity --error --text="時刻は HH:MM 形式で入力してください。"
-    exit 1
-fi
-
-TARGET_SEC=$(date -d "${DATE_SELECTED} ${TIME_SELECTED}" +%s)
-NOW_SEC=$(date +%s)
-
-(( TARGET_SEC <= NOW_SEC )) && TARGET_SEC=$(date -d "tomorrow ${TIME_SELECTED}" +%s)
-WAIT_SEC=$((TARGET_SEC - NOW_SEC))
-
-###############################################
-# 開始待機バー（キャンセル検知付き）
-###############################################
-if (( WAIT_SEC > 0 )); then
-    (
-        for ((s=0; s<=WAIT_SEC; s++)); do
-            sleep 1
-            echo $(( s * 100 / WAIT_SEC ))
-            echo "# テスト開始まであと $((WAIT_SEC - s)) 秒"
-        done
-    ) | zenity --progress \
-        --title="開始待機中" \
-        --percentage=0 \
-        --auto-close \
-        --cancel-label="中止"
-
-    ZEN_EXIT=${PIPESTATUS[1]}
-    [[ "$ZEN_EXIT" -ne 0 ]] && echo "開始待機キャンセル" && exit 1
-fi
-
-###############################################
-# cleanup / trap
+# cleanup
 ###############################################
 cleanup() {
-    echo "=== cleanup 実行 ==="
+    echo "=== cleanup ==="
     pkill -f bit_cmd_line_x64 2>/dev/null || true
     docker kill gpu_burn 2>/dev/null || true
     docker rm -f gpu_burn 2>/dev/null || true
@@ -113,7 +64,7 @@ trap cleanup INT TERM
 # Cycle ループ
 ###############################################
 for ((i=1;i<=NUM_CYCLES;i++)); do
-    echo "===== Cycle $i / $NUM_CYCLES 開始 ====="
+    echo "===== Cycle $i / $NUM_CYCLES ====="
 
     CYCLE_GPU_LOG_DIR="${LOG_GPU_DIR}/cycle_${i}"
     CYCLE_CPU_LOG_DIR="${LOG_CPU_DIR}/cycle_${i}"
@@ -143,17 +94,16 @@ for ((i=1;i<=NUM_CYCLES;i++)); do
         --cancel-label="停止"
 
     ZEN_EXIT=${PIPESTATUS[1]}
-    if [[ "$ZEN_EXIT" -ne 0 ]]; then
-        echo "ユーザーキャンセル検知"
-        cleanup
-    fi
+    [[ "$ZEN_EXIT" -ne 0 ]] && cleanup
 
     docker wait "$CONTAINER_ID" >/dev/null 2>&1 || true
-    pkill -f bit_cmd_line_x64
+    pkill -f bit_cmd_line_x64 2>/dev/null || true
     kill "$NVSMI_PID" "$GPU_LOG_PID" 2>/dev/null || true
     mv /home/testos/V4/burnintest/logs/BiTLog*.log "$CYCLE_CPU_LOG_DIR/" 2>/dev/null || true
 
-    (( i < NUM_CYCLES )) && sleep "$BREAK_SECONDS"
+    if (( i < NUM_CYCLES )); then
+        sleep "$BREAK_SECONDS"
+    fi
 done
 
 ###############################################

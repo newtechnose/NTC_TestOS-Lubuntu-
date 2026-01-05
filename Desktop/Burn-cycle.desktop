@@ -5,6 +5,6 @@ Name=Burn Cycle
 Comment=Run gpu_burn.sh to stress test GPU and BurnInTest
 Exec=/home/testos/shell/Burn-cycle.sh
 Icon=/home/testos/Pictures/Icon/Burn-Cycle.png
-Terminal=false
+Terminal=true
 
 

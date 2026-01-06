@@ -40,6 +40,8 @@ elif [ "$STATUS" -ge 33 ] && [ "$STATUS" -le 35 ]; then
     /home/testos/shell/Product_shell/SmartNAS1000-2U_AllFlash.sh
 elif [ "$STATUS" -ge 36 ] && [ "$STATUS" -le 38 ]; then
     /home/testos/shell/Product_shell/TXPMedical-2U.sh
+elif [ "$STATUS" -ge 39 ] && [ "$STATUS" -le 41 ]; then
+    /home/testos/shell/Product_shell/Nrec6000_NoSSD.sh
 else
     zenity --error --text="無効なステータスです: $STATUS"
     exit 1

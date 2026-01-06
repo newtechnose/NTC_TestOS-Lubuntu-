@@ -31,6 +31,7 @@ class ImageSelector:
         self.ssd_with_smartnas_2u_sh = "/home/testos/shell/Product_shell/SmartNAS1000-2U_Season2.sh"
         self.nrec4000_sh = "/home/testos/shell/Product_shell/Nrec4000.sh"
         self.nrec6000_sh = "/home/testos/shell/Product_shell/Nrec6000.sh"
+        self.nrec6000_nossd_sh = "/home/testos/shell/Product_shell/Nrec6000_NoSSD.sh"
         self.nrec8000_sh = "/home/testos/shell/Product_shell/Nrec8000.sh"
         self.cloudy_sh = "/home/testos/shell/Product_shell/cloudy.sh"  # Cloudyのシェルを追加
         self.ai_server_sh = "/home/testos/shell/Product_shell/ai_server_AMD.sh"  # AIサーバ(AMD)のスクリプト
@@ -265,7 +266,41 @@ class ImageSelector:
 
     def nrec6000_selected(self):
         messagebox.showinfo("選択", "Nrec6000が選ばれました")
+        self.display_nrec6000_ssd_selection()
+
+    def display_nrec6000_ssd_selection(self):
+        self.clear_window()
+
+        label = tk.Label(self.root, text="Nrec6000：SSD構成を選択してください")
+        label.pack(pady=10)
+
+        btn1 = tk.Button(
+            self.root,
+            text="SSDなしモデル",
+            width=30,
+            command=self.nrec6000_ssd_none_selected
+        )
+        btn1.pack(pady=10)
+
+        btn2 = tk.Button(
+            self.root,
+            text="SSDありモデル",
+            width=30,
+            command=self.nrec6000_ssd_with_selected
+        )
+        btn2.pack(pady=10)
+
+    
+    def nrec6000_ssd_none_selected(self):
+        messagebox.showinfo("選択", "Nrec6000（SSDなし）が選ばれました")
+        self.execute_script(self.nrec6000_nossd_sh)
+
+    def nrec6000_ssd_with_selected(self):
+        messagebox.showinfo("選択", "Nrec6000（SSDあり）が選ばれました")
         self.execute_script(self.nrec6000_sh)
+
+
+
 
     def nrec8000_selected(self):
         messagebox.showinfo("選択", "Nrec8000が選ばれました")

@@ -7,7 +7,7 @@ STATUS_FILE="/home/testos/Status/status.txt"
 
 # status.txtが存在しなければファイルを作成し、初期カウントを0とする
 if [ ! -f "$STATUS_FILE" ]; then
-    echo "24" > "$STATUS_FILE"
+    echo "39" > "$STATUS_FILE"
     chmod 777 "$STATUS_FILE"
 fi
 
@@ -23,7 +23,7 @@ if [ -z "$count" ]; then
 	
 	if zenity --question --title="statusファイルの初期化確認" --text="前回の製品テストシステムログを削除します。よろしいでしょうか？"; then
 	    # ユーザーが「はい」を選択した場合、ファイルを初期値に戻す
-	    echo "9" > "$STATUS_FILE"
+	    echo "39" > "$STATUS_FILE"
 	    zenity --info --text="Statusフォルダが初期値に戻されました。"
 	else
 	    # ユーザーが「いいえ」を選択した場合、何もしない
@@ -32,7 +32,7 @@ if [ -z "$count" ]; then
 	fi
 	
 	rm -rf /home/testos/Status/*
-	echo "24" > "$STATUS_FILE"
+	echo "39" > "$STATUS_FILE"
 	chmod 777 "$STATUS_FILE"
 	# status.txtからカウントを読み込む
 	count=$(cat "$STATUS_FILE")
@@ -41,13 +41,13 @@ fi
 
 
 # 特定のカウント値で特定のコマンドを実行する
-TARGET_COUNT=24
+TARGET_COUNT=39
 if [ "$count" -eq "$TARGET_COUNT" ]; then
 	sudo sleep 3
 	# テストをはじめから開始するかユーザーに尋ねる
-	if zenity --question --title="statusファイルの初期化確認" --text="Nrec6000の製品テストをはじめから始めますか？"; then
+	if zenity --question --title="statusファイルの初期化確認" --text="Nrec6000(NoSSD)の製品テストをはじめから始めますか？"; then
 	    # ユーザーが「はい」を選択した場合、ファイルを初期値に戻す
-	    echo "24" > "$STATUS_FILE"
+	    echo "39" > "$STATUS_FILE"
 	    zenity --info --text="ファイルが初期値に戻されました。"
 	else
 	    # ユーザーが「いいえ」を選択した場合、何もしない
@@ -58,9 +58,9 @@ fi
 
 
 # 特定のカウント値で特定のコマンドを実行する
-TARGET_COUNT=24
+TARGET_COUNT=39
 if [ "$count" -eq "$TARGET_COUNT" ]; then
-    echo "カウントが ${TARGET_COUNT} に達しました。第24群コマンドを実行します。"
+    echo "カウントが ${TARGET_COUNT} に達しました。第39群コマンドを実行します。"
 
 
 	# タスク0: 各種初期設定
@@ -1013,7 +1013,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 
 	fi
 
-	figlet "Nrec6000 TEST START"
+	figlet "Nrec6000 NoSSD TEST START"
 
 	# カウントを1増やす
 	((count++))
@@ -1055,9 +1055,9 @@ fi
 
 
 # 特定のカウント値で特定のコマンドを実行する
-TARGET_COUNT=25
+TARGET_COUNT=40
 if [ "$count" -eq "$TARGET_COUNT" ]; then
-    echo "カウントが ${TARGET_COUNT} に達しました。第10群コマンドを実行します。"
+    echo "カウントが ${TARGET_COUNT} に達しました。第40群コマンドを実行します。"
     
 	# ファイルパスの定義
 	SERIAL_FILE="/home/testos/Status/serial.txt"
@@ -1133,18 +1133,23 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 		printf "| %-30s | %-6s | %-50s |\n" "$vd_name作成" "$result" "$raid_description" >> "$txt_file"
 	}
 
-	# VD0を作成 (全容量)
-	create_virtual_disk "VD0" "all" "1_RAID_VD0.txt"
-	echo "RAIDでVD0(全容量)が構成されました。" | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/1_RAID_VD0.txt"
+	# VD0を作成 (200GB)
+	create_virtual_disk "VD0" "200GB" "1_RAID_VD0.txt"
+	echo "RAIDでVD0(200GB)が構成されました。" | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/1_RAID_VD0.txt"
+	echo -e "\n\n\n\n\n"
+
+	# VD1を作成 (残りの容量)
+	create_virtual_disk "VD1" "all" "2_RAID_VD1.txt"
+	echo "RAIDでVD1(残りの容量)が構成されました。" | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/2_RAID_VD1.txt"
 	echo -e "\n\n\n\n\n"
 
 	# ホットスペアがある場合の処理
 	if [ "$has_hotspare" = true ]; then
-		sudo ./storcli64 /c0 /e$en /s$hotspare_slot add hotsparedrive | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/2_RAID_Hotspare.txt"
+		sudo ./storcli64 /c0 /e$en /s$hotspare_slot add hotsparedrive | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/3_RAID_Hotspare.txt"
 		sleep 1
 
 		# Status判定
-		if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/2_RAID_Hotspare.txt"; then
+		if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/3_RAID_Hotspare.txt"; then
 			result="合格"
 		else
 			result="不合格"
@@ -1152,30 +1157,47 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 
 		# 結果をログに出力
 		printf "| %-30s | %-6s | %-50s |\n" "ホットスペア作成" "$result" "$raid_description" >> "$txt_file"
-		echo "Slot $hotspare_slot にホットスペアが構成されました。" | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/2_RAID_Hotspare.txt"
+		echo "Slot $hotspare_slot にホットスペアが構成されました。" | tee -a "/home/testos/Desktop/Result/$SERIAL/Log/3_RAID_Hotspare.txt"
 		echo -e "\n\n\n\n\n"
 	fi
 	# タスク3: VDのInitialization
-	sudo ./storcli64 /c0/v0 start init full force | tee -a /home/testos/Desktop/Result/$SERIAL/Log/3_VD0_init.txt
+	sudo ./storcli64 /c0/v0 start init full force | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_VD0_init.txt
+	sudo ./storcli64 /c0/v1 start init full force | tee -a /home/testos/Desktop/Result/$SERIAL/Log/5_VD1_init.txt
 	        # Status判定
-		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/3_VD0_init.txt"; then
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/4_VD0_init.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
 		        fi
 		# さらに項目を追加する場合は、同様の処理を続ける
 		printf "| %-30s | %-6s | %-50s |\n" "VD0初期化" "$result" "INIT Operation" >> "$txt_file"
-
-	sleep 120
-
+	        # Status判定
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/5_VD1_init.txt"; then
+		            result="合格"
+		        else
+		            result="不合格"
+		        fi
+		# さらに項目を追加する場合は、同様の処理を続ける
+		printf "| %-30s | %-6s | %-50s |\n" "VD1初期化" "$result" "INIT Operation" >> "$txt_file"
+	sleep 60
 	while true; do
 	    output=$(sudo ./storcli64 /c0 /v0 show init)
 	    echo "$output"
 	    if echo "$output" | grep -q "Not in progress"; then
 	        break
 	    fi
+	    sleep 5
+	done | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_VD0_init.txt
+	sleep 120
+
+	while true; do
+	    output=$(sudo ./storcli64 /c0 /v1 show init)
+	    echo "$output"
+	    if echo "$output" | grep -q "Not in progress"; then
+	        break
+	    fi
 	    sleep 1800
-	done | tee -a /home/testos/Desktop/Result/$SERIAL/Log/3_VD0_init.txt
+	done | tee -a /home/testos/Desktop/Result/$SERIAL/Log/5_VD1_init.txt
 	sleep 60
 
 	
@@ -1183,19 +1205,19 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	# タスク4: RAIDカードの設定
 	# ディレクトリの移動
 	cd /opt/MegaRAID/storcli
-	echo "Patrol Readの間隔設定を開始します..." | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
+	echo "Patrol Readの間隔設定を開始します..." | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
 	# Patrolreadコマンドを実行する
-	sudo ./storcli64 /c0 set patrolread delay=720 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
-	echo "Patrol Readの間隔設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
+	sudo ./storcli64 /c0 set patrolread delay=720 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
+	echo "Patrol Readの間隔設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
 	sleep 5
-	echo "Patrol Readの自動開始設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
-	sudo ./storcli64 /c0 set patrolread mode=auto starttime=$one_month_later 00 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
-	echo "Patrol Readの自動開始設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt
+	echo "Patrol Readの自動開始設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
+	sudo ./storcli64 /c0 set patrolread mode=auto starttime=$one_month_later 00 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
+	echo "Patrol Readの自動開始設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt
 	echo -e "\n\n\n\n\n"
 	sleep 5
 
 	        # Status判定
-		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/4_Storcli_Patrolread.txt"; then
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_Patrolread.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
@@ -1205,13 +1227,13 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 
 
 
-	echo "Consistency Checkの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/5_Storcli_ConsistencyCheck.txt
-	sudo ./storcli64 /c0 set cc=seq starttime=$ten_year_later 00 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/5_Storcli_ConsistencyCheck.txt
-	echo "Consistency Checkの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/5_Storcli_ConsistencyCheck.txt
+	echo "Consistency Checkの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_ConsistencyCheck.txt
+	sudo ./storcli64 /c0 set cc=seq starttime=$ten_year_later 00 | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_ConsistencyCheck.txt
+	echo "Consistency Checkの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_ConsistencyCheck.txt
 	sleep 5
 
 	        # Status判定
-		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/5_Storcli_ConsistencyCheck.txt"; then
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_ConsistencyCheck.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
@@ -1220,13 +1242,13 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 		printf "| %-30s | %-6s | %-50s |\n" "ConsistencyCheck設定" "$result" "$ten_year_later ※LSAでScheduleを Weekly ⇒ Monthly に変更すること" >> "$txt_file"
 	       
 
-	echo "Copybackの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_CopyBack.txt
-	sudo ./storcli64 /c0 set copyback=off type=all | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_CopyBack.txt
-	echo "Copybackの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_CopyBack.txt
+	echo "Copybackの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/8_Storcli_CopyBack.txt
+	sudo ./storcli64 /c0 set copyback=off type=all | tee -a /home/testos/Desktop/Result/$SERIAL/Log/8_Storcli_CopyBack.txt
+	echo "Copybackの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/8_Storcli_CopyBack.txt
 	sleep 5
 
 	        # Status判定
-		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/6_Storcli_CopyBack.txt"; then
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/8_Storcli_CopyBack.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
@@ -1235,13 +1257,13 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 		printf "| %-30s | %-6s | %-50s |\n" "CopyBack設定" "$result" "Copy Back ALL" >> "$txt_file"
 
 
-	echo "Battery Warningの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_BatteryWarning.txt
-	sudo ./storcli64 /c0 set batterywarning=off | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_BatteryWarning.txt
-	echo "Battery Warningの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_BatteryWarning.txt
+	echo "Battery Warningの設定を行います。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/9_Storcli_BatteryWarning.txt
+	sudo ./storcli64 /c0 set batterywarning=off | tee -a /home/testos/Desktop/Result/$SERIAL/Log/9_Storcli_BatteryWarning.txt
+	echo "Battery Warningの設定を完了しました。" | tee -a /home/testos/Desktop/Result/$SERIAL/Log/9_Storcli_BatteryWarning.txt
 
 
 	        # Status判定
-		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/7_Storcli_BatteryWarning.txt"; then
+		        if grep -q "Status = Success" "/home/testos/Desktop/Result/$SERIAL/Log/9_Storcli_BatteryWarning.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
@@ -1256,7 +1278,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	echo "BurnInTestを開始します。"
 	sleep 5
 	cd /home/testos/V4/burnintest/64bit
-	sudo ./bit_cmd_line_x64 -C /home/testos/BurnInTest_cfg/Nrec4000_8000.cfg
+	sudo ./bit_cmd_line_x64 -C /home/testos/BurnInTest_cfg/smartnas1000_season1.cfg
 	sleep 3
 	echo "BurnInTestを完了しました。" 
 	sleep 3
@@ -1279,7 +1301,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	cpu_maths=$(echo "${test_results[0]}")
 	memory_ram=$(echo "${test_results[1]}")
 	disk_sdb=$(echo "${test_results[2]}")
-#	disk_sdc=$(echo "${test_results[3]}")
+	disk_sdc=$(echo "${test_results[3]}")
 
 	# 最後の行を取得
 	last_line=$(grep "TEST RUN" "$log_file" | tail -n 1)
@@ -1298,11 +1320,11 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	printf "| %-30s | %-6s | %-50s |\n" "cpu_maths" " " "$cpu_maths" >> "$txt_file"
 	printf "| %-30s | %-6s | %-50s |\n" "memory_ram" " " "$memory_ram" >> "$txt_file"
 	printf "| %-30s | %-6s | %-50s |\n" "disk_sdb" " " "$disk_sdb" >> "$txt_file"
-#	printf "| %-30s | %-6s | %-50s |\n" "disk_sdc" " " "$disk_sdc" >> "$txt_file"
+	printf "| %-30s | %-6s | %-50s |\n" "disk_sdc" " " "$disk_sdc" >> "$txt_file"
 	
 	# タスク6: HDDアクセステスト
 	# hdparmの実行と結果の保存
-	hdparm_sdb=$(sudo hdparm -ft /dev/sdb | tee -a /home/testos/Desktop/Result/$SERIAL/Log/8_hdparm_sdb.txt)
+	hdparm_sdb=$(sudo hdparm -ft /dev/sdb | tee -a /home/testos/Desktop/Result/$SERIAL/Log/10_hdparm_sdb.txt)
 
 	# 結果から速度を抽出（数値のみを取り出す）
 	speed=$(echo "$hdparm_sdb" | grep -oP '\d+(\.\d+)?(?= MB/sec)' | head -n 1)
@@ -1317,6 +1339,20 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	printf "| %-30s | %-6s | %-50s MB/sec |\n" "VD0のHDDアクセステスト" "$result" "$speed" >> "$txt_file"
 
 	sleep 3
+
+	hdparm_sdc=$(sudo hdparm -ft /dev/sdc | tee -a /home/testos/Desktop/Result/$SERIAL/Log/11_hdparm_sdc.txt)
+
+	# 結果から速度を抽出（数値のみを取り出す）
+	speed=$(echo "$hdparm_sdc" | grep -oP '\d+(\.\d+)?(?= MB/sec)' | head -n 1)
+
+	# 速度が300.00 MB/sec以上かどうかのチェック
+	if (( $(echo "$speed >= 300.00" | bc -l) )); then
+	    result="合格"
+	else
+	    result="不合格"
+	fi
+	# さらに項目を追加する場合は、同様の処理を続ける
+	printf "| %-30s | %-6s | %-50s MB/sec |\n" "VD1のHDDアクセステスト" "$result" "$speed" >> "$txt_file"
 
 	sleep 10
 	
@@ -1359,7 +1395,7 @@ fi
 
 	
 # 特定のカウント値で特定のコマンドを実行する
-TARGET_COUNT=26
+TARGET_COUNT=41
 if [ "$count" -eq "$TARGET_COUNT" ]; then
 	sleep 3
 	# ファイルパスの定義

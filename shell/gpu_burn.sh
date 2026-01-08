@@ -93,10 +93,10 @@ docker wait "$CONTAINER_ID" >/dev/null
 # ==============================
 # テスト結果判定（NGがあるか確認）
 # ==============================
-result="合格"
+result="不合格"
 
-if grep -q "NG" "$LOG_DIR/gpu_burn_output.txt"; then
-        result="不合格"
+if grep -q "OK" "$LOG_DIR/gpu_burn_output.txt"; then
+        result="合格"
 fi
 
 

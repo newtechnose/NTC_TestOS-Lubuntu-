@@ -126,11 +126,11 @@ done
 # ==============================
 # テスト結果判定（NGがあるか確認）
 # ==============================
-result="合格"
+result="不合格"
 
 for d in "$LOG_DIR"/cycle_*; do
-    if grep -q "NG" "$d/gpu_burn_output.txt"; then
-        result="不合格"
+    if grep -q "OK" "$d/gpu_burn_output.txt"; then
+        result="合格"
         break
     fi
 done

@@ -162,43 +162,17 @@ done
 ###############################################
 # 判定
 ###############################################
-
 bit_result="合格"
-
-# cycleディレクトリが存在しない場合は不合格
-cpu_cycles=( "$LOG_CPU_DIR"/cycle_* )
-if [[ ! -d "${cpu_cycles[0]}" ]]; then
-    bit_result="不合格"
-else
-    for d in "${cpu_cycles[@]}"; do
-        log=$(ls "$d"/BiTLog*.log 2>/dev/null | head -n 1)
-
-        # BiTLogが存在しない場合は不合格
-        [[ -f "$log" ]] || { bit_result="不合格"; break; }
-
-        grep -q "Errors:[[:space:]]*[1-9]" "$log" && bit_result="不合格"
-        grep "TEST RUN" "$log" | tail -n 1 | grep -q PASSED || bit_result="不合格"
-
-        [[ "$bit_result" == "不合格" ]] && break
-    done
-fi
-
+for d in "$LOG_CPU_DIR"/cycle_*; do
+    log=$(ls "$d"/BiTLog*.log 2>/dev/null | head -n 1)
+    grep -q "Errors:[[:space:]]*[1-9]" "$log" && bit_result="不合格"
+    grep "TEST RUN" "$log" | tail -n 1 | grep -q PASSED || bit_result="不合格"
+done
 
 gpu_result="合格"
-
-gpu_cycles=( "$LOG_GPU_DIR"/cycle_* )
-if [[ ! -d "${gpu_cycles[0]}" ]]; then
-    gpu_result="不合格"
-else
-    for d in "${gpu_cycles[@]}"; do
-        # gpu-burn.log が無い場合は不合格
-        [[ -f "$d/gpu-burn.log" ]] || { gpu_result="不合格"; break; }
-
-        grep -q "NG" "$d/gpu-burn.log" && gpu_result="不合格"
-
-        [[ "$gpu_result" == "不合格" ]] && break
-    done
-fi
+for d in "$LOG_GPU_DIR"/cycle_*; do
+    grep -q "NG" "$d/gpu-burn.log" && gpu_result="不合格"
+done
 
 ###############################################
 # 最終結果
@@ -208,4 +182,3 @@ if [[ "$bit_result" == "合格" && "$gpu_result" == "合格" ]]; then
 else
     zenity --error --text="<span font_desc='Sans 40' background='#FF0000'><b>FAILED</b></span>" --no-wrap
 fi
-

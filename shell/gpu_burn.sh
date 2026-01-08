@@ -89,6 +89,40 @@ docker wait "$CONTAINER_ID" >/dev/null
 # Zenity「終了」ボタン
 [ $? -ne 0 ] && cleanup
 
+
+# ==============================
+# テスト結果判定（NGがあるか確認）
+# ==============================
+result="合格"
+
+if grep -q "NG" "$LOG_DIR/gpu_burn_output.txt"; then
+        result="不合格"
+fi
+
+
+
+# ===== 判定処理 =====
+if [[ "$result" == "合格"  ]]; then
+    # 合格の場合
+    zenity --info \
+        --title="GPU負荷テスト結果" \
+        --width=400 --height=200 \
+        --ok-label="閉じる" \
+        --text="<span font_desc='Sans 40' foreground='black' background='#00FF00'><b>PASSED</b></span>" \
+        --no-wrap
+else
+    # 不合格の場合
+    zenity --error \
+        --title="GPU負荷テスト結果" \
+        --width=400 --height=200 \
+        --ok-label="閉じる" \
+        --text="<span font_desc='Sans 40' foreground='black' background='#FF0000'><b>FAILED</b></span>" \
+        --no-wrap
+fi
+
+
+
+
 # 完了メッセージ
 zenity --info --width 600 --title="完了" \
   --text="GPU負荷テストが終了しました。\nログは $LOG_DIR に保存されています。"

@@ -14,14 +14,14 @@ action=$(zenity --list --radiolist \
   --title="処理選択" \
   --text="実行する操作を選択してください。" \
   --column="選択" --column="操作内容" \
-  TRUE "①Meister-SのStatusを見る" \
-  FALSE "②Meister-Sのバージョンを見る" \
+  TRUE "①ミラーカードのStatusを見る" \
+  FALSE "②ミラーカードのバージョンを見る" \
   FALSE "③パトロールリードを実行する" \
-  FALSE "④Meister-Sのログを取得する" \
+  FALSE "④ミラーカードのログを取得する" \
   --height=400 --width=400)
 
 # 選択に応じた処理
-if [ "$action" == "①Meister-SのStatusを見る" ]; then
+if [ "$action" == "①ミラーカードのStatusを見る" ]; then
   # Meister-SのStatusを見る
   qterminal -e "bash -c '
     DRIVE=${selected_drive}
@@ -29,8 +29,8 @@ if [ "$action" == "①Meister-SのStatusを見る" ]; then
     read -p \"Press Enter to exit...\"
   '"
 
-elif [ "$action" == "②Meister-Sのバージョンを見る" ]; then
-  # Meister-Sのバージョンを見る
+elif [ "$action" == "②ミラーカードのバージョンを見る" ]; then
+  # ミラーカードのバージョンを見る
   qterminal -e "bash -c '
     DRIVE=${selected_drive}
     sudo /usr/local/MirrorMonitor/nu_disp -t /dev/\${DRIVE} --show-info-all | grep -i -E \"FPGA Revision|RAID FirmWare\"
@@ -60,13 +60,13 @@ elif [ "$action" == "③パトロールリードを実行する" ]; then
         sleep 600
     done
 
-    echo \"Meister-Sのパトロールリードが完了しました。\"
+    echo \"ミラーカードのパトロールリードが完了しました。\"
     read -p \"Press Enter to exit...\"
   '"
 
-  zenity --info --text "Meister-Sのパトロールリードが完了しました。" --title "完了通知"
+  zenity --info --text "ミラーカードのパトロールリードが完了しました。" --title "完了通知"
 
-elif [ "$action" == "④Meister-Sのログを取得する" ]; then
+elif [ "$action" == "④ミラーカードのログを取得する" ]; then
   # 保存するファイル名をZenityで取得
   log_filename=$(zenity --entry --text "ログを保存するファイル名を入力してください。（例：meister_log.bin）" --entry-text "meister_log.bin")
 
@@ -81,15 +81,15 @@ elif [ "$action" == "④Meister-Sのログを取得する" ]; then
     DRIVE=${selected_drive}
     LOGFILE=${log_filename}
 
-    echo \"Meister-Sのログを取得中...\"
-    sudo /usr/local/MirrorMonitor/nu_getlog -t /dev/\${DRIVE} -f /home/testos/Meister-S_Log/\${LOGFILE}
-    echo \"Meister-Sのログ取得が完了しました。\"
-    sudo chmod 777 /home/testos/Meister-S_Log/\${LOGFILE}
+    echo \"ミラーカードのログを取得中...\"
+    sudo /usr/local/MirrorMonitor/nu_getlog -t /dev/\${DRIVE} -f /home/testos/MirrorMonitor_Log/\${LOGFILE}
+    echo \"ミラーカードのログ取得が完了しました。\"
+    sudo chmod 777 /home/testos/MirrorMonitor_Log/\${LOGFILE}
     read -p \"Press Enter to exit...\"
   '"
 
   # ログ取得完了の通知をZenityで表示
-  zenity --info --text "Meister-Sのログを取得しました。\n保存先: /home/testos/Meister-S_Log/$log_filename" --title "ログ取得完了"
+  zenity --info --text "ミラーカードのログを取得しました。\n保存先: /home/testos/MirrorMonitor_Log/$log_filename" --title "ログ取得完了"
 
 else
   # 選択されなかった場合

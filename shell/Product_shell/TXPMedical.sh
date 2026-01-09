@@ -167,7 +167,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	echo "BurnInTest(Kite SSD)を開始します。"
 	sleep 5
 	cd /home/testos/V4/burnintest/64bit
-	sudo ./bit_cmd_line_x64 -C /home/testos/V4/burnintest/TXPMedical_SSD.cfg
+	sudo ./bit_cmd_line_x64 -C /home/testos/BurnInTest_cfg/TXPMedical_SSD.cfg
 	sleep 3
 	echo "BurnInTest(Kite SSD)を完了しました。" 
 	sleep 3
@@ -236,9 +236,9 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	done <<< "$results_section"
 
 	# 各テスト結果を個別の変数に保存
-	cpu_maths=$(echo "${test_results[0]}")
-	memory_ram=$(echo "${test_results[1]}")
-	disk_sdb=$(echo "${test_results[2]}")
+	cpu_maths=$(echo "${test_results[1]}")
+	memory_ram=$(echo "${test_results[2]}")
+	disk_sdb=$(echo "${test_results[3]}")
 
 
 	# 最後の行を取得
@@ -313,6 +313,10 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	echo "$count" > "$STATUS_FILE"
 	
 	/usr/sbin/reboot_tool
+
+	mv ~/.config/autostart/run_reboot_status.desktop.disabled ~/.config/autostart/run_reboot_status.desktop
+
+	/home/testos/shell/Run_Reboot_Status.sh
 	
 	sleep 130
 	

@@ -1349,6 +1349,10 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	echo "$count" > "$STATUS_FILE"
 	
 	/usr/sbin/reboot_tool
+
+	mv ~/.config/autostart/run_reboot_status.desktop.disabled ~/.config/autostart/run_reboot_status.desktop
+
+	/home/testos/shell/Run_Reboot_Status.sh
 	
 	sleep 130
 	

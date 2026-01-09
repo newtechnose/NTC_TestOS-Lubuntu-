@@ -469,9 +469,9 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	done <<< "$results_section"
 
 	# 各テスト結果を個別の変数に保存
-	cpu_maths=$(echo "${test_results[0]}")
-	memory_ram=$(echo "${test_results[1]}")
-	disk_sdc=$(echo "${test_results[2]}")
+	cpu_maths=$(echo "${test_results[1]}")
+	memory_ram=$(echo "${test_results[2]}")
+	disk_sdc=$(echo "${test_results[3]}")
 
 
 	# 最後の行を取得
@@ -556,6 +556,10 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	echo "$count" > "$STATUS_FILE"
 	
 	/usr/sbin/reboot_tool
+
+	mv ~/.config/autostart/run_reboot_status.desktop.disabled ~/.config/autostart/run_reboot_status.desktop
+
+	/home/testos/shell/Run_Reboot_Status.sh
 	
 	sleep 130
 	

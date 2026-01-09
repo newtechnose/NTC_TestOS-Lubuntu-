@@ -241,7 +241,7 @@ for option in $options; do
                 --column="選択" --column="状態" \
                 FALSE "ブザーが鳴っている" \
                 TRUE "ブザーが鳴っていない" \
-                --height=200 --width=400)
+                --height=400 --width=400)
 
             # 選択内容に応じた処理
             if [[ "$RESPONSE" == "ブザーが鳴っていない" ]]; then

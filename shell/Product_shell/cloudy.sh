@@ -45,7 +45,7 @@ TARGET_COUNT=12
 if [ "$count" -eq "$TARGET_COUNT" ]; then
 	sudo sleep 3
 	# テストをはじめから開始するかユーザーに尋ねる
-	if zenity --question --title="statusファイルの初期化確認" --text="Cloudyの製品テストをはじめから始めますか？"; then
+	if zenity --question --title="statusファイルの初期化確認" --text="CloudyⅤの製品テストをはじめから始めますか？"; then
 	    # ユーザーが「はい」を選択した場合、ファイルを初期値に戻す
 	    echo "12" > "$STATUS_FILE"
 	    zenity --info --text="ファイルが初期値に戻されました。"
@@ -183,7 +183,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 
 	fi
 	
-	figlet "Cloudy TEST START"
+	figlet "CloudyⅤ TEST START"
 
 	# カウントを1増やす
 	((count++))

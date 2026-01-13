@@ -33,7 +33,7 @@ def main():
     background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
     # テキストラベル
-    label = tk.Label(root, text="Cloudyの設定・テストがすべて完了しました", font=('Helvetica', 19, 'bold'), fg="blue", bg="white")
+    label = tk.Label(root, text="CloudyⅤの設定・テストがすべて完了しました", font=('Helvetica', 19, 'bold'), fg="blue", bg="white")
     label.pack(padx=10, pady=170)
 
     # OKボタン

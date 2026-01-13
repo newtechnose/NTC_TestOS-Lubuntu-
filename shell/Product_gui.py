@@ -9,7 +9,7 @@ class ImageSelector:
         self.root.title("画像選択")
         self.root.geometry("1200x400")  # ウィンドウサイズを変更
 
-        # CloudyとSmartNAS1000の画像ファイルパス
+        # CloudyⅤとSmartNAS1000の画像ファイルパス
         self.cloudy_image_path = "/home/testos/Pictures/Icon/NTC_Cloudy.png"
         self.smartnas_image_path = "/home/testos/Pictures/Icon/SmartNAS_1U2U.png"
         self.nrec_image_path = "/home/testos/Pictures/Icon/Nrec_4000_6000_8000.png"
@@ -72,7 +72,7 @@ class ImageSelector:
         scrollbar.pack(side="bottom", fill="x")
 
         # 製品画像をフレームに配置
-        self.add_product(scrollable_frame, self.cloudy_image_path, "Cloudy", self.cloudy_selected)
+        self.add_product(scrollable_frame, self.cloudy_image_path, "CloudyⅤ", self.cloudy_selected)
         self.add_product(scrollable_frame, self.smartnas_image_path, "SmartNAS1000", self.smartnas_selected)
         self.add_product(scrollable_frame, self.nrec_image_path, "Nrecシリーズ", self.nrec_selected)
         self.add_product(scrollable_frame, self.ai_server_image_path, "AIサーバ(AMD)", self.ai_server_selected)
@@ -93,7 +93,7 @@ class ImageSelector:
         label.pack()
 
     def cloudy_selected(self):
-        messagebox.showinfo("選択", "Cloudyが選ばれました")
+        messagebox.showinfo("選択", "CloudyⅤが選ばれました")
         self.execute_script(self.cloudy_sh)  # Cloudyのシェルを実行
 
     def smartnas_selected(self):

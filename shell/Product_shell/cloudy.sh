@@ -183,7 +183,7 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 
 	fi
 	
-	figlet "CloudyⅤ TEST START"
+	figlet "Cloudy5 TEST START"
 
 	# カウントを1増やす
 	((count++))

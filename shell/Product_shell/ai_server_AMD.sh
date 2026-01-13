@@ -251,12 +251,12 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 	sleep 3
 
 
-	# タスク2: Meister-SのPatrolRead
-	echo "Meister-SのPatrol Readを開始します。"
+	# タスク2: ミラーカードのPatrolRead
+	echo "ミラーカードのPatrol Readを開始します。"
 	sleep 5
 	cd /usr/local/MirrorMonitor
 	sleep 2
-	sudo ./nu_pr -t /dev/sda start | tee -a /home/testos/Desktop/Result/$SERIAL/Log/1_Meister-S_Patrolread.txt
+	sudo ./nu_pr -t /dev/sda start | tee -a /home/testos/Desktop/Result/$SERIAL/Log/1_MirrorCard_Patrolread.txt
 	sleep 10
 	
 		
@@ -269,17 +269,17 @@ if [ "$count" -eq "$TARGET_COUNT" ]; then
 			break
 		fi
 		sleep 600
-	done | tee -a /home/testos/Desktop/Result/$SERIAL/Log/1_Meister-S_Patrolread.txt
+	done | tee -a /home/testos/Desktop/Result/$SERIAL/Log/1_MirrorCard_Patrolread.txt
 	
 	# Status判定
-		        if grep -q "RAID Patrol Read Status: PATROL SUCCESS" "/home/testos/Desktop/Result/$SERIAL/Log/1_Meister-S_Patrolread.txt"; then
+		        if grep -q "RAID Patrol Read Status: PATROL SUCCESS" "/home/testos/Desktop/Result/$SERIAL/Log/1_MirrorCard_Patrolread.txt"; then
 		            result="合格"
 		        else
 		            result="不合格"
 		        fi
 	
 	# さらに項目を追加する場合は、同様の処理を続ける
-	printf "| %-30s | %-6s | %-50s |\n" "Meister-Sのパトロールリード" "$result" "詳細はMirrorMonitorのログを参照してください" >> "$txt_file"
+	printf "| %-30s | %-6s | %-50s |\n" "ミラーカードのパトロールリード" "$result" "詳細はMirrorMonitorのログを参照してください" >> "$txt_file"
 	
 
 

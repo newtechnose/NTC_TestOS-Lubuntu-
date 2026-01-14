@@ -53,13 +53,13 @@ for ctl in $controller_list; do
 
   # 再起動確認
   if [ "$reboot_needed" -eq 1 ]; then
-    echo -n "FW更新が行われました。一度シャットダウンしますか？ [Y/N]: "
+    echo -n "FW更新が行われました。一度リブートしますか？ [Y/N]: "
     read -r answer
     if [[ "$answer" =~ ^[Yy]$ ]]; then
-      echo "シャットダウンします..."
-      sudo shutdown -h now
+      echo "リブートします..."
+      sudo reboot
     else
-      echo "シャットダウンはスキップされました。"
+      echo "リブートはスキップされました。"
     fi
   fi
 
@@ -85,7 +85,7 @@ for ctl in $controller_list; do
   echo "------------------------------"
 done
 
-# 再起動確認
+# シャットダウン確認
 if [ "$reboot_needed" -eq 2 ]; then
   echo -n "FW更新が行われました。一度シャットダウンしますか？ [Y/N]: "
   read -r answer

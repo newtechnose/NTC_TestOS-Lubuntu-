@@ -43,12 +43,14 @@ else
     zenity --info --text="設定をキャンセルしました。"
 fi
 
+    # 標準の既定値
+    PASSWORD="ArcADMIN1"
+
+
 
 # ダイアログを表示してパスワードを標準の既定値に設定するか確認
 if zenity --question --text="IPMIのadminパスワードを「$PASSWORD」に変更しますか？"; then
 
-    # 標準の既定値
-    PASSWORD="ArcADMIN1"
 
     # IPMI Toolを使用してBMCの設定を変更
     cd /home/testos

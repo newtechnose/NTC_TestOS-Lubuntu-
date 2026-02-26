@@ -68,6 +68,17 @@ fi
 
 SCRIPT_PATH="${PRODUCT_SCRIPTS[$PRODUCT_MODEL]}"
 
+
+###############################################
+# 出荷日の設定
+###############################################
+	SHIP_DATE=$(zenity --calendar --date-format="%Y/%m/%d" --title="出荷日選択" --text="出荷日を入力してください。")
+
+	#one_month_later=$(date -d "$SHIP_DATE +1 month" +%Y/%m/%d)
+	#ten_year_later=$(date -d "$SHIP_DATE +10 year" +%Y/%m/%d)
+
+
+
 ###############################################
 # ステータスファイル作成
 ###############################################
@@ -80,6 +91,7 @@ cat <<EOF > "$STATUS_FILE"
 START_TIME=$START_TIME
 OPERATOR=$OPERATOR
 PRODUCT_MODEL=$PRODUCT_MODEL
+SHIP_DATE=$SHIP_DATE
 SCRIPT_PATH=$SCRIPT_PATH
 RESULT=RUNNING
 EOF
@@ -88,11 +100,85 @@ EOF
 # 実行内容表示
 ###############################################
 zenity --info \
+  --width=600 \
   --title="試験内容確認" \
   --text="以下の内容で試験を開始します。\n\n\
 実行担当者：$OPERATOR\n\
 製品型番：$PRODUCT_MODEL\n\
+出荷日：$SHIP_DATE\n\
 ステータス保存先：$STATUS_FILE"
+
+
+###############################################
+# 各部品シリアル取得（重複チェック・連番表示版）
+###############################################
+SERIAL_LIST=()
+
+while true; do
+  # 入力ダイアログを表示
+  PARTS_SERIAL_INPUT=$(zenity --entry \
+    --title="パーツシリアルスキャン" \
+    --text="各パーツのバーコードをスキャンしてください。\n（終了する場合は 'end' と入力、もしくはキャンセル）" \
+    --entry-text="")
+
+  # 終了条件
+  if [[ $? -ne 0 ]] || [[ "$PARTS_SERIAL_INPUT" == "end" ]] || [[ -z "$PARTS_SERIAL_INPUT" ]]; then
+    break
+  fi
+
+  # 重複チェック
+  DUPLICATE=false
+  for s in "${SERIAL_LIST[@]}"; do
+    if [[ "$s" == "$PARTS_SERIAL_INPUT" ]]; then
+      DUPLICATE=true
+      break
+    fi
+  done
+
+  if $DUPLICATE; then
+    zenity --warning \
+      --title="重複エラー" \
+      --text="シリアル [$PARTS_SERIAL_INPUT] は既にスキャン済みです。" \
+      --timeout=5
+    continue 
+  fi
+
+  SERIAL_LIST+=("$PARTS_SERIAL_INPUT")
+done
+
+# --- 結果の整形処理 ---
+if [ ${#SERIAL_LIST[@]} -eq 0 ]; then
+  zenity --info --text="入力されたシリアル番号はありません。"
+else
+  # 番号付きの文字列を作成
+  SERIAL_LIST_RESULT=""
+  INDEX=1
+  
+  # 丸数字（①〜）を付与するループ
+  for s in "${SERIAL_LIST[@]}"; do
+    # 1-20番くらいまでは丸数字、それ以降は (21) のような形式にするのが一般的です
+    # ここではシンプルな 1. 2. 形式、または直接丸数字を指定できます
+    if [ $INDEX -le 20 ]; then
+      # Unicodeの丸数字（①〜⑳）を利用
+      CIRCLE_NUM=$(printf "\\U$(printf '%x' $((0x245F + INDEX)))")
+      SERIAL_LIST_RESULT+="${CIRCLE_NUM} ${s}\n"
+    else
+      SERIAL_LIST_RESULT+="${INDEX}. ${s}\n"
+    fi
+    ((INDEX++))
+  done
+
+  zenity --info --title="スキャン完了" --width=600 --text="以下のシリアルを取得しました：\n\n$SERIAL_LIST_RESULT"
+fi
+
+
+###############################################
+# シリアル保存
+###############################################
+SERIAL_FILE="/tmp/parts_serial_list.txt"
+printf "%s\n" "${SERIAL_LIST[@]}" > "$SERIAL_FILE"
+
+
 
 ###############################################
 # ⑤ 型番.sh 実行

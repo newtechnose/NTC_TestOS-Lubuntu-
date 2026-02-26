@@ -22,6 +22,10 @@ error_exit() {
     exit 1
 }
 
+# Product.sh から渡される現物シリアルリスト
+SCAN_FILE="/tmp/parts_serial_list.txt"
+
+
 log "=== TowerAI_Workstation2.sh START ==="
 
 ###############################################
@@ -382,10 +386,159 @@ fi
 
 
 
-
-
-
 rm -f "$COOKIE"
+
+
+set +e
+
+###############################################
+# OS内シリアル取得
+###############################################
+ALL_PARTS=()
+SCAN_SERIALS=()
+USED_SERIALS=()
+
+###############################################
+# GUIスキャン結果読み込み
+###############################################
+if [[ ! -f "$SCAN_FILE" ]]; then
+  log "ERROR: スキャンファイルが存在しません: $SCAN_FILE"
+  exit 1
+fi
+
+mapfile -t SCAN_SERIALS < "$SCAN_FILE"
+
+log "=== Barcode Scan Serial List ==="
+for s in "${SCAN_SERIALS[@]}"; do
+  log "$s"
+done
+log "=== Barcode Scan Serial List Finish ==="
+
+
+log "=== OS Serial List  ==="
+###############################################
+# Motherboard OSコード出力
+###############################################
+MB_MODEL=$(sudo dmidecode -s baseboard-product-name 2>/dev/null)
+MB_SERIAL=$(sudo dmidecode -s baseboard-serial-number 2>/dev/null)
+
+if [ -n "$MB_SERIAL" ]; then
+    ALL_PARTS+=("Baseboard,$MB_MODEL,$MB_SERIAL")
+fi
+
+
+###############################################
+# メモリ OSコード出力
+###############################################
+while IFS=',' read -r model serial; do
+  ALL_PARTS+=("Memory,$model,$serial")
+done < <(
+sudo dmidecode -t memory | awk -F': ' '
+function trim(s){gsub(/^[ \t]+|[ \t]+$/,"",s); return s}
+
+/Memory Device/ {pn=""; sn=""; size=""}
+/Size/ {size=$2}
+/Part Number/ {pn=trim($2)}
+/Serial Number/ {sn=trim($2)}
+
+/^$/ {
+  if(size !~ /No Module/ && sn!="" && sn!="Not Specified")
+    printf "%s,%s\n", pn, sn
+}'
+)
+
+
+
+
+###############################################
+# SSD OSコード出力
+###############################################
+FOUND_SSD=0
+
+while read dev; do
+
+  if [[ "$dev" == nvme* ]]; then
+    info=$(sudo smartctl -i -d nvme "/dev/$dev" 2>/dev/null)
+  else
+    info=$(sudo smartctl -i "/dev/$dev" 2>/dev/null)
+  fi
+
+  model=$(echo "$info" | awk -F': ' '/Device Model|Model Number/ {gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2; exit}')
+  serial=$(echo "$info" | awk -F': ' '/Serial Number/ {gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2; exit}')
+
+  if [[ -n "$serial" ]]; then
+    FOUND_SSD=1
+    ALL_PARTS+=("SSD,$model,$serial")
+  fi
+
+done < <(lsblk -dn -o NAME,TYPE | awk '$2=="disk"{print $1}')
+
+
+
+
+###############################################
+# RAID Controller 取得（確実版 + log）
+###############################################
+STORCLI="/opt/MegaRAID/storcli/storcli64"
+
+if [[ -x "$STORCLI" ]]; then
+
+  FOUND=0
+
+  while read ctl model; do
+
+    serial=$(sudo "$STORCLI" /c${ctl} show all 2>/dev/null \
+      | awk -F'= ' '
+        /Serial Number|Board Serial Number/ {
+          gsub(/^[ \t]+|[ \t]+$/, "", $2);
+          print $2; exit
+        }')
+
+    if [[ -n "$serial" ]]; then
+      FOUND=1
+      ALL_PARTS+=("RAID,$model,$serial")
+    fi
+
+  done < <(
+    sudo "$STORCLI" show | awk '
+      /^[[:space:]]*[0-9]+[[:space:]]/ {
+        ctl=$1
+        model=$2
+        print ctl, model
+      }'
+  )
+
+  [[ $FOUND -eq 0 ]] && log "No RAID controller found -> skip"
+
+else
+  log "storcli not found -> skip"
+fi
+
+
+
+
+
+
+for p in "${ALL_PARTS[@]}"; do
+  log "$p"
+done
+
+
+
+
+set -euo pipefail
+
+
+
+###############################################
+# 機能チェック(GPU DPポート)
+###############################################
+
+
+
+
+
+
 
 
 

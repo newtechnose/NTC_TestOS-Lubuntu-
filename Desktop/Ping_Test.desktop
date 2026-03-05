@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Ping Test
+Comment=Run Ping Connect Test
+Exec=/home/testos/shell/ping_monitor.sh
+Icon=/home/testos/Pictures/Icon/pingicon.png
+Terminal=true
+
+
+

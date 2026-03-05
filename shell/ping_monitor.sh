@@ -25,7 +25,7 @@ get_speed() {
     [ -z "$speed" ] && echo "Unknown" || echo "$speed"
 }
 
-trap "echo -e '\nStopped by user at $(date)' >> $LOGFILE; exit 0" SIGINT
+trap 'echo -e "\nStopped by user at $(date)" >> "$LOGFILE"; exit 0' SIGINT
 
 echo "===== Ping Monitor Start: $(date) =====" | tee -a $LOGFILE
 

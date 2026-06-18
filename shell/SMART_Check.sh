@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # バージョン番号を変数に設定
-TOOL_VER="1.02"
+TOOL_VER="1.03"
 
 # Zenityで最初にメッセージ表示
 zenity --info --title="S.M.A.R.T自動判定ツール" --text="S.M.A.R.T自動判定ツール Ver${TOOL_VER}を実行します"
@@ -76,9 +76,9 @@ phison_count=0
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUH722020BLE6L4"|"WDC WUH722424ALE6L4"|"WDC WUH722016CLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4"|"WDC  WUH722016CLE6L4" ]]; then
             ((wd_count++))
-        elif [[ "$device_model" =~ "WDC WUS721204BLE6L4" ]]; then
+        elif [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
             ((wd4_count++))
         elif [[ "$device_model" =~ "HGST HUS726T4TALE6L4" ]]; then
             ((hgst_count++))
@@ -153,7 +153,7 @@ done
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUH722020BLE6L4"|"WDC WUH722424ALE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUH722020BLE6L4"|"WDC  WUH722424ALE6L4"|"WDC  WUH722016CLE6L4" ]]; then
             echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
 
             # 各SMART値を数値として取得（10進数指定）
@@ -187,7 +187,7 @@ done
 for file in "$data_dir"/*.txt; do
     if [[ -f "$file" ]]; then
         device_model=$(grep -i "Device Model:" "$file" | awk -F": " '{print $2}')
-        if [[ "$device_model" =~ "WDC WUS721204BLE6L4" ]]; then
+        if [[ "$device_model" =~ "WDC  WUS721204BLE6L4" ]]; then
             echo "Checking WD HDD: $device_model..." | tee -a "$RESULT_FILE"
 
             WORST_1=$((10#$(awk '$1 == "1" {print $5}' "$file")))

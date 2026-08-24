@@ -13,7 +13,8 @@ options=$(zenity --width 500 --height 600 --list --checklist \
     TRUE "Copybackの設定" \
     TRUE "BatteryWarningの「OFF」設定"\
     FALSE "BatteryWarningの「ON」設定"\
-    FALSE "Card Alarm無効の設定" )
+    FALSE "Card Alarm無効の設定" \
+    TRUE "Failpdonsmarterror「ON」設定" )
 
 # ユーザーがキャンセルした場合
 if [ $? -ne 0 ]; then
@@ -259,6 +260,32 @@ for option in $options; do
             sleep 3
             echo "RAID0の構成情報を削除しました。"
             sleep 3
+
+
+        "Failpdonsmarterror「ON」設定")
+            ########################################################
+            # Failpdonsmarterror ON
+            ########################################################
+            cd /opt/MegaRAID/storcli
+
+            echo "Failpdonsmarterrorの「ON」設定を行います。"
+
+            failpdon_smarterror_output=$(
+                sudo ./storcli64 \
+                /c$ctl \
+                set failpdonsmarterror=on \
+                2>&1
+            )
+
+            sleep 3
+
+            echo "Failpdonsmarterrorの「ON」設定を完了しました。"
+
+            result_summary+="Failpdonsmarterror ON 設定結果:\n$failpdon_smarterror_output\n\n"
+
+            sleep 2
+            ;;
+
 
 
         else

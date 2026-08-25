@@ -262,6 +262,12 @@ for option in $options; do
             sleep 3
 
 
+        else
+            echo "ユーザーが「いいえ」を選択しました。処理を中断します。"
+            sleep 3
+        fi
+            ;;
+
         "Failpdonsmarterror「ON」設定")
             ########################################################
             # Failpdonsmarterror ON
@@ -285,14 +291,7 @@ for option in $options; do
 
             sleep 2
             ;;
-
-
-
-        else
-            echo "ユーザーが「いいえ」を選択しました。処理を中断します。"
-            sleep 3
-        fi
-            ;;
+        
         *)
             echo "不明なオプションが選択されました。"
             ;;
